@@ -58,7 +58,7 @@ void printres(char *buf,CLOCK *block_time,struct tran_info *tp,
             cout<<"output"<<endl;
             for(int i=1;i<=tp->output_num;i++) cout<<i<<":  "<<"addr:"<<addr[tp->input_num+i]<<"   "<<"vol:"<<vol[tp->input_num+i]<<endl;
         }
-    }
+}
 void parse_tran(char *buf,CLOCK *block_time,struct tran_info *tp, 
               ADDR_SEQ *addr, uint32_t *vol,ERROR_CODE *err){
     int state=0;
@@ -140,19 +140,4 @@ void parse_tran(char *buf,CLOCK *block_time,struct tran_info *tp,
     }
     check_length(buf,tp,addr,vol);
     printres(buf,block_time,tp,addr,vol);
-}
-int main(){
-    for(int I=0;I<20;I++){
-        char temp[1000];
-        fin.getline(temp,1000);
-         struct tran_info tp;
-        tp.input_num=0;
-        tp.output_num=0;
-        tp.long_btc_vol=0;
-        CLOCK block_time=0;
-        uint32_t *addr=(uint32_t *)malloc(sizeof(uint32_t)*10000);
-        uint32_t *vol=(uint32_t *)malloc(sizeof(uint32_t)*10000);
-        ERROR_CODE error=NO_ERROR;
-        parse_tran(temp,&block_time,&tp,addr,vol,&error);
-    }
 }
