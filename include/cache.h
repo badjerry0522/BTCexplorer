@@ -6,16 +6,22 @@
 
 enum CACHE_TYPE{NONE,NORMAL,FULL};
 
-#define SET_SIZE 4 //4 lines in one set
-#define LOG_SET_SIZE 2 //log_2(SET_SIZE)
+#define LINES 4 //4 lines in one set
+#define LOG_LINES 2 //log_2(SET_SIZE)
 #define LINE_SIZE (4*1024*1024) //line size
 #define LOG_LINE_SIZE 22 //log_2(LINE_SIZE)
+#define SET_SIZE (LINES*LINE_SIZE)
+#define LOG_SET_SIZE (LOG_LINES+LOG_LINE_SIZE)
 
-struct set_control{
+struct line_control{
     uint64_t tag;
-    uint32_t valid:1;
-    uint32_t access_times:31;
-    uint8_t p;
+    uint8_t valid:1;
+    uint8_t unused:7;
+    uint32_t access_times;
+    uint8_t *p;
+};
+struct set_control{
+    struct line_control l[LINES];
 };
 //if d is the power of 2, return 1
 //           else         return 0
