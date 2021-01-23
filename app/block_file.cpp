@@ -1,5 +1,5 @@
-#include"core_type.h"
-#include"trans_in_mem.h"
+#include"../include/core_type.h"
+#include"../include/trans_in_mem.h"
 #include<cstring>
 #include<cstdlib>
 #include<stdlib.h>
