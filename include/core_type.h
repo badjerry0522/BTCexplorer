@@ -35,6 +35,7 @@ enum ERROR_CODE{NO_ERROR,
     OUT_OF_SATOSHI,
     CACHE_OUT_MEMORY,
     CANNOT_OPEN_FILE,
+    ERROR_FILE,
     ERROR_FILE};
 
 float Satoshi2float(BTC_VOL vol);
