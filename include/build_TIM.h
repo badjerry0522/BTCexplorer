@@ -4,6 +4,7 @@
 
 //Read or Update the files in [blockfiles_dir], 
 //and output the data files into [output_dir]
-void build_TIM(char *blockfiles_dir, char *output_dir,ERROR_CODE *err);
+//first=34 for test
+void build_TIM(char *blockfiles_dir, int first,char *output_dir,ERROR_CODE *err);
 void update_TIM(char *blockfiles_dir, char *output_dir, ERROR_CODE *err);
 #endif
