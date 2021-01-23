@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <sys/types.h> 
 #include <sys/stat.h>
+#include <string.h>
 #include <fcntl.h>
+#include <iostream>     // std::cout
+#include <fstream>      // std::ifstream
 #include "../include/core_type.h"
 #include "../include/cache.h"
 using namespace std;
@@ -51,7 +54,7 @@ void init_set_control(struct set_control *sc,int set_num,int lines,int linesize,
 cache::cache(){
     this->sc=NULL;
     this->d=NULL;
-    this->fhandle=-1;
+    this->fhandle=NULL;
 }
 ERROR_CODE cache::init(char *filename,int logC,int logE,uint64_t _max_index){
     if(logC==0){
@@ -75,8 +78,8 @@ ERROR_CODE cache::init(char *filename,int logC,int logE,uint64_t _max_index){
     ret = stat(filename,&statbuf);
     if(ret != 0) return ERROR_FILE;
     if(statbuf.st_size!=filesize) return ERROR_FILE;
-    this->fhandle=open(filename,O_RDONLY|O_BINARY);
-    if(fhandle==-1){
+    this->fhandle=fopen(filename,"r");
+    if(fhandle==NULL){
         return ERROR_FILE;
     }
     if(type==NONE) return NO_ERROR;
@@ -86,43 +89,42 @@ ERROR_CODE cache::init(char *filename,int logC,int logE,uint64_t _max_index){
     if(type==FULL){   //type=FULL
         d=(uint8_t *)malloc(filesize);
         if(d==NULL){
-            close(fhandle);
+            fclose(fhandle);
             return CACHE_OUT_MEMORY;
         }
-        uint64_t readret=read(fhandle, d, filesize);
-        if(readret!=filesize){
+        uint64_t freadret=fread(d, Esize,max_index,fhandle);
+        if(freadret!=filesize){
             free(d);
-            close(fhandle);
+            fclose(fhandle);
             return ERROR_FILE;
         }
-        close(fhandle);
-        fhandle=-1;
+        fclose(fhandle);
+        fhandle=NULL;
         return NO_ERROR;
     }
-    else{ //type=NORMAL
-        if(Csize<SET_SIZE){
-            close(fhandle);
-            return INVALID_ARG; //C is too small to hold one set
-        } 
-        d=(uint8_t*)malloc((1<<logC));
-        if(d==NULL){
-            close(fhandle);
-            return CACHE_OUT_MEMORY;
-        }
-        log_set_num=logC-LOG_SET_SIZE;
-        set_num=1<<log_set_num;
-        sc=(struct set_control *)malloc(sizeof(struct set_control)*set_num);
-        if(sc==NULL){
-            close(fhandle);
-            free(d):
-            return CACHE_OUT_MEMORY;
-        }
-        init_set_control(sc,set_num,LINES,LINE_SIZE,d);
+    //type=NORMAL
+    if(Csize<SET_SIZE){
+        fclose(fhandle);
+        return INVALID_ARG; //C is too small to hold one set
+    } 
+    d=(uint8_t*)malloc((1<<logC));
+    if(d==NULL){
+        fclose(fhandle);
+        return CACHE_OUT_MEMORY;
     }
-
+    log_set_num=logC-LOG_SET_SIZE;
+    set_num=1<<log_set_num;
+    sc=(struct set_control *)malloc(sizeof(struct set_control)*set_num);
+    if(sc==NULL){
+        fclose(fhandle);
+        free(d);
+        return CACHE_OUT_MEMORY;
+    }
+    init_set_control(sc,set_num,LINES,LINE_SIZE,d);
+    return NO_ERROR;
 }
 
-ERROR_CODE cache::load(uint64_t index,uint8_t *p){
+ERROR_CODE cache::load(uint64_t index,unsigned char *p){
     uint8_t *p0;
     uint64_t offset;
     if(index>max_index) return INVALID_ARG;
@@ -133,18 +135,16 @@ ERROR_CODE cache::load(uint64_t index,uint8_t *p){
         return NO_ERROR;
     }
     else if(type==NONE){
-        uint64_t seek_result=lseek(fhandle,offset,SEEK_SET);
-        int read_result=read(fhandle,p,Esize);
-        if((seek_result==offset)&&(read_result==Esize)) return NO_ERROR;
+        uint64_t seek_result=fseek(fhandle,offset,SEEK_SET);
+        int fread_result=fread(p,Esize,1,fhandle);
+        if((seek_result==offset)&&(fread_result==Esize)) return NO_ERROR;
         return ERROR_FILE;
     }
-    else{  //NORMAL
-
-    }
+    return NO_ERROR;
 }
 
 cache::~cache(){
-    if(fhandle!=1) close(fhandle);
+    if(fhandle!=NULL) fclose(fhandle);
     if(d!=NULL) free(d);
     if(sc!=NULL) free(sc);
 

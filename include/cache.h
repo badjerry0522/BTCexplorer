@@ -34,14 +34,15 @@ int log2(uint64_t d,ERROR_CODE *err);
 class cache{
     private:
         struct set_control *sc;
-        uint8_t *d;
+        unsigned char *d;
         uint64_t Csize;     //size of full cache
         int Esize;          //size of element
         uint64_t set_mask;
         uint64_t tag_mask;
         int set_num;
+        int log_set_num;
         uint64_t max_index;
-        int fhandle;
+        FILE* fhandle;
         CACHE_TYPE type;
     public:
         cache();
@@ -55,7 +56,7 @@ class cache{
         ERROR_CODE init(char *filename,int logC,int logE,uint64_t _max_index);
 
         //Load the index=th element to p
-        ERROR_CODE load(uint64_t index, uint8_t *p);
+        ERROR_CODE load(uint64_t index, unsigned char *p);
         //Load num elements to p
         //ERROR_CODE load(uint64_t index, int num,uint8_t *p);
 
