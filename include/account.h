@@ -6,13 +6,14 @@
 
 class address_set;
 struct account_info{
-	struct address_set_info asinfo;
+	
 	//Other special information for account 
 };
 class account:address_set{
 	private:
 		ACCOUNT_SEQ seq;
-		struct account_info info;
+		
+		struct account_info *account_info;
 	public:
 		//create an account with an address seq and fill its account_info
 		account(ACCOUNT_SEQ seq);

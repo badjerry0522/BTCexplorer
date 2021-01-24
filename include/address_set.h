@@ -9,26 +9,26 @@
 using namespace std;
 
 
-//地址（账户）的信息
-struct acc_info
+
+struct address_set_info
 {
-	int firsttime;    //最早出现时间
-	int lasttime;     //最晚出现时间
-	int K;           //参与交易总数
-	int Kin;       //存入交易总数
-	int Kout;    //取出交易总数
-	double V;           //当前账户金额
-	double Vmax;  //历史最大金额
-	double Vin;      //交易输入金额总数
-	double Vout;   //交易输出金额总数
-	bool Multisig; //是否为多地址类型
-	int sumout;     //取出交易的账户地址总数
-	int sumin;        //存入交易的账户地址总数
-	int PROD;//活跃时长（单位：秒）
-	float PRKIKO;//输入交易和输出交易之比
-	float TS;//交易频度
-	bool VZERO;//当前金额是否为 0
-	float VL;//交易金额总数和最大金额之比
+	int firsttime;    
+	int lasttime;     
+	int K;          //Number of transactions
+	int Kin;       	//Number of Input transactions
+	int Kout;    	//Number of Ouput transactions
+	double V;       //balance  LONG_BTC_VOL?
+	double Vmax;  	//max balance
+	double Vin;     //vol of all input transactions
+	double Vout;    //vol of all output transactions
+	bool Multisig; 	//is multi address
+	int sumout;     //Number of accounts in input transactions
+	int sumin;      //Number of accoutns in output transactions 
+	int PROD;     	//Living time in seconds
+	float PRKIKO;	//=Kin/Kout
+	float TS;    	//=K/PROD
+	bool VZERO;		//current balance is 0
+	float VL;		//=(Vin+Vout)/Vmax
 	int T10;//在 [T1, TK] 时间范围内地址金额为最大金额 10% 以下时间（单位：秒）
 	int T1050;//在 [T1, TK] 时间范围内金额为最大金额 10%～50% 时间（单位：秒）
 	int T50;//在 [T1, TK] 时间范围内地址金额为最大金额 50% 以上时间（单位：秒）
@@ -39,7 +39,7 @@ struct acc_info
 	int ANUM;//地址所属账户中包含的地址数
 	int TNUM; //交易的总0数
 
-	acc_info() {
+	address_set_info() {
 		firsttime = 0;
 		lasttime = 0;
 		K = 0;
@@ -69,14 +69,12 @@ struct acc_info
 };
 
 
-
-
-
 class tran_set;
-struct address_set_info{
 
-};
 class address_set{
+	private:
+		//Init with NULL
+		struct address_set_info *addr_set_info;
 	public:
 		//Empty Set
 		address_set();
