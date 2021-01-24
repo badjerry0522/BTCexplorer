@@ -10,6 +10,7 @@
 #include<iostream>
 using namespace std;
 //open input file
+uint64_t version=0,block_num=0,trans_num=0,addr_num=0,first_block_time=0,last_block_time=0;
 fstream openfile(char *blockfiles_dir,int cur){
     char NO[4];
     sprintf(NO,"%d",cur);
@@ -57,13 +58,21 @@ void init_first_trans(block_info *cur,fstream *fin,FILE *fout_av,
     uint32_t vol[10000];
     ERROR_CODE err;
     parse_tran(buf,&block_time,&tp,addr,vol,&err);
+    trans_num++;
     tp.index=0;
     printav(addr,vol,&tp,fout_av);
+
+    block_num++;
     cur->block_time=block_time;
     cur->first_tran_seq=0;
     cur->tran_num++;
+    first_block_time=block_time;
+
     if(tp.long_btc_vol==1) *nxt_index=(tp.input_num+tp.output_num)*2;
     else *nxt_index=tp.input_num+tp.output_num;
+
+    addr_num+=tp.input_num+tp.output_num;
+
     printtrans(&tp,fout_trans);
     free(buf);
 }
@@ -79,6 +88,8 @@ void readtransinfo(char *buf,block_info *cur,block_info *nxt,uint64_t *nxt_index
     ERROR_CODE err;
 
     parse_tran(buf,&block_time,&tp,addr,vol,&err);
+    trans_num++;
+    addr_num+=tp.input_num+tp.output_num;
 
     printav(addr,vol,&tp,fout_av);
     tp.index=*nxt_index;
@@ -91,43 +102,45 @@ void readtransinfo(char *buf,block_info *cur,block_info *nxt,uint64_t *nxt_index
         cur->tran_num++;
     }
     else{
+        block_num++;
+        last_block_time=block_time;
         printblock(cur,fout_block);
-        nxt=(block_info *)malloc(sizeof(block_info));
-        nxt->block_time=block_time;
-        nxt->first_tran_seq=cur->first_tran_seq+cur->tran_num;
-        nxt->tran_num=1;
-        cur=nxt;
+       cur->block_time=block_time;
+       cur->first_tran_seq=cur->first_tran_seq+cur->tran_num;
+       cur->tran_num=1;
     }
 }
 void build_TIM(char *blockfiles_dir, int first,char *output_dir,ERROR_CODE *err){
     int i=0;
     fstream f1=openfile(blockfiles_dir,first);
+
+    char des_av[100];//get output des of av
+    strcpy(des_av,output_dir);
+    strcat(des_av,"av.txt");
+    FILE *fout_av=fopen(des_av,"wb");
+
+    char des_block[100];//get output des of block
+    strcpy(des_block,output_dir);
+    strcat(des_block,"block.txt");
+    FILE *fout_block=fopen(des_block,"wb");
+
+    char des_trans[100];//get output des of trans
+    strcpy(des_trans,output_dir);
+    strcat(des_trans,"trans.txt");
+    FILE *fout_trans=fopen(des_trans,"wb");
+
     while(f1.is_open()==true){
+        cout<<"tx_"<<first+i<<"opened"<<endl;
         block_info *cur,*nxt;
         cur=(block_info *)malloc(sizeof(block_info));
         nxt=NULL;
-
-        char des_av[100];//get output des of av
-        strcpy(des_av,output_dir);
-        strcat(des_av,"av.txt");
-        FILE *fout_av=fopen(des_av,"wb");
-
-        char des_block[100];//get output des of block
-        strcpy(des_block,output_dir);
-        strcat(des_block,"block.txt");
-        FILE *fout_block=fopen(des_block,"wb");
-
-        char des_trans[100];//get output des of trans
-        strcpy(des_trans,output_dir);
-        strcat(des_trans,"trans.txt");
-        FILE *fout_trans=fopen(des_trans,"wb");
-
         uint64_t nxt_index=0;
         init_first_trans(cur,&f1,fout_av,fout_trans,&nxt_index);
         cout<<"init end"<<endl;
         char *buf=(char *)malloc(sizeof(char )*1000000);
         while(!f1.eof()){
             f1.getline(buf,1000000);
+            if(strlen(buf)==0) continue;
             readtransinfo(buf,cur,nxt,&nxt_index,fout_trans,fout_block,fout_av);
         }
         printblock(cur,fout_block);
@@ -135,8 +148,13 @@ void build_TIM(char *blockfiles_dir, int first,char *output_dir,ERROR_CODE *err)
 
         free(cur);
         free(buf);
-        fclose(fout_trans),fclose(fout_block),fclose(fout_av);
         f1=openfile(blockfiles_dir,first+i);
     }
+    fclose(fout_trans),fclose(fout_block),fclose(fout_av);
     f1.close();
+    char des_TIM_meta[100];
+    strcpy(des_TIM_meta,output_dir);
+    strcat(des_TIM_meta,"TIM_meta.txt");
+    ofstream fout_TIM_meta(des_TIM_meta);
+    fout_TIM_meta<<version<<" "<<block_num<<" "<<trans_num<<" "<<addr_num<<" "<<first_block_time<<" "<<last_block_time<<" "<<endl;
 }
