@@ -8,6 +8,9 @@
 
 using namespace std;
 class tran_set;
+struct address_set_info{
+
+};
 class address_set{
 	public:
 		//Empty Set
