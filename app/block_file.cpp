@@ -9,10 +9,12 @@ using namespace std;
 ifstream fin("tx_34.txt",ios::in);
 void getvalue(char *buf,int *i,char signal_end,struct tran_info *tp,uint32_t *res){
     int start=*i;
+    char temp[256];
     while(buf[*i]!=signal_end){ 
         (*i)++;
     }
     int end=(*i)-1;
+    //Tommy: where to free temp
     char *temp=(char *)malloc(sizeof(char )*(end-start+1));
     strncpy(temp,buf+start,(end-start+1));
     uint64_t longres=atol(temp);
@@ -59,6 +61,7 @@ void printres(char *buf,CLOCK *block_time,struct tran_info *tp,
             for(int i=1;i<=tp->output_num;i++) cout<<i<<":  "<<"addr:"<<addr[tp->input_num+i]<<"   "<<"vol:"<<vol[tp->input_num+i]<<endl;
         }
 }
+//Tommy enum state
 void parse_tran(char *buf,CLOCK *block_time,struct tran_info *tp, 
               ADDR_SEQ *addr, uint32_t *vol,ERROR_CODE *err){
     int state=0;
@@ -77,6 +80,7 @@ void parse_tran(char *buf,CLOCK *block_time,struct tran_info *tp,
             int start=i;
             while(buf[i]!=',') i++;
             int end=i-1;
+            //where to free temp
             char *temp=(char *)malloc(sizeof(char)*(end-start+1));
             strncpy(temp,buf+start,(end-start+1));
             *block_time=getblocktime(temp);
@@ -99,6 +103,7 @@ void parse_tran(char *buf,CLOCK *block_time,struct tran_info *tp,
             i+=12;
             if(buf[i]=='['){//get addr
                 i++;
+                //Tommy: where to free res?
                 uint32_t *res=(uint32_t*)malloc(sizeof(uint32_t)*2);
                 getvalue(buf,&i,']',tp,res);
                 addr[(tp->input_num)*2-1]=res[0];
@@ -121,6 +126,7 @@ void parse_tran(char *buf,CLOCK *block_time,struct tran_info *tp,
             i+=12;
             if(buf[i]=='['){
                 i++;
+                //Tommy: where to free res?
                 uint32_t *res=(uint32_t*)malloc(sizeof(uint32_t)*2);
                 getvalue(buf,&i,']',tp,res);
                 addr[(tp->input_num)*2+(tp->output_num)*2-1]=res[0];
