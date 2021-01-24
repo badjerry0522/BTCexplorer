@@ -18,7 +18,7 @@ class account:address_set{
 		//create an account with an address seq and fill its account_info
 		account(ACCOUNT_SEQ seq);
 		
-		ACCOUNT_SEQ get_account_seq();	//获取账户序列号
+		ACCOUNT_SEQ get_account_seq();	//get acount seq
 		//Fill the info struct
 		ERROR_CODE get_account_info(struct account_info *info);	
 		~account();
