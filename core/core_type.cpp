@@ -1,5 +1,5 @@
 #include <math.h>
-#include "core_type.h"
+#include "../include/core_type.h"
 using namespace std;
 
 float Satoshi2double(BTC_VOL vol){
