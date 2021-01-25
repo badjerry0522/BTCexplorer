@@ -1,10 +1,11 @@
 #ifndef _TRAN_SET_H
 #define _TRAN_SET_H
-#include <ostream>
+#include <iostream>
 #include <string>
 #include "core_type.h"
 #include "trans_in_mem.h"
 #include "address_set.h"
+using namespace std;
 class address_set;
 class trans_in_mem;
 

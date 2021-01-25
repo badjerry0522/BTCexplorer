@@ -5,8 +5,11 @@
 #define MAX_OUTPUT_NUM 1<<16
 #define MAX_BTC_ADDRESS_LEN 42
 
-#define NULL_SEQ 0xFFFFFFFE //NULL SEQ
-#define COINBASE_SEQ 0xFFFFFFFF //for coinbase
+//Special addresses
+#define COINBASE_SEQ 0xFFFFFFFF //for coinbase   -1
+#define NonStandardAddress 0xFFFFFFFE //non standard address -2
+#define OpReturn 0xFFFFFFFD //BlockSci opreturn -3
+#define NULL_SEQ 0xFFFFFFFC //NULL SEQ
 
 typedef uint32_t BLOCK_SEQ; 
 typedef uint32_t ADDR_SEQ;
