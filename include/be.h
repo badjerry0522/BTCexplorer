@@ -21,13 +21,15 @@ class trans_in_mem;
 struct app_record{
     char*cmd;
     char *help_msg;          //app help massage name
-    int (*app_fun)(int,void **); //application function
+    ERROR_CODE (*app_fun)(int,void **); //application function
 };
+
 struct BE_env{
    address_query *addrq;
    account_query *accountq;
    trans_in_mem *tim;
    app_manager *app;
+   char *app_work_dir;
    ostream status;
    ostream progress;
    ostream error;

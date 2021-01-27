@@ -2,6 +2,7 @@
 #include <ostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "../include/core_type.h"
 #include "../include/trans_in_mem.h"
@@ -14,24 +15,30 @@
 using namespace std;
 #define MAX_APP_ARGN 10
 
-
-int BEbuildin_bye(int argn,void **argv){
-	return 1;
+extern struct app_record graphviz_record;
+ERROR_CODE BEbuildin_bye(int argn,void **argv){
+	return EXIT_BE;
 }
 struct app_record bye_record={"bye","Exit BE",BEbuildin_bye};
 
-int BEbuildin_help(int argn,void **argv){
+ERROR_CODE BEbuildin_help(int argn,void **argv){
 	struct BE_env *ep=(struct BE_env *)argv[0];
 	app_manager *app_m=ep->app;
 	struct app_record *app;
-//	cout<<"in help"<<endl;
+	/*Test for argn and argv
+	cout<<argn<<endl;
+	if(argn>0){
+		for(int i=1;i<=argn;i++)
+			printf("%s\n",argv[i]);
+	}
+	*/
 	app=app_m->begin();
 	while(app!=NULL){
 		printf("%s:\t %s\n",app->cmd,app->help_msg);
 //		cout<<app->help_msg<<endl;
 		app=app_m->next();
 	}
-	return 0;
+	return NO_ERROR;
 }
 struct app_record help_record={"help","Show all cmd in BE",BEbuildin_help};
 
@@ -53,6 +60,11 @@ int main(int argn,char **argv){
 	app_manager *app=new app_manager();
 	struct BE_env *be_env=(struct BE_env *)malloc(sizeof(struct BE_env));
 	//init be_env
+	char app_dir[200];
+	strcpy(app_dir,argv[1]);
+	strcat(app_dir,"/app_data/");
+	be_env->app_work_dir=app_dir;
+	//printf("%s\n",be_env->app_work_dir);
 	be_env->app=app;
 
 	int app_argn;
@@ -62,6 +74,7 @@ int main(int argn,char **argv){
 	//init app_manager
 	app->add_app(&help_record);
 	app->add_app(&bye_record);
+	app->add_app(&graphviz_record);
 	while(1){
 		cout<<"%";
 		cin.getline(cmdline,1023);

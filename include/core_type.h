@@ -32,12 +32,14 @@ enum ADDR_TYPE{P2PKH,P2PSH,SegWit};//types of btc address
 enum LABEL{UNKNOWN,EXCHANGES,POOLS,GAMBLING,MIXER, MARKET};
 
 enum ERROR_CODE{NO_ERROR,
+    EXIT_BE,
     INVALID_ARG,    //invalid argument
     INVALID_ADDR_SEQ,
     INVALID_BTC_ADDR,
     OUT_OF_SATOSHI,
     CACHE_OUT_MEMORY,
     CANNOT_OPEN_FILE,
+    END_OF_FILE,
     ERROR_FILE};
 
 float Satoshi2float(BTC_VOL vol);
