@@ -5,9 +5,13 @@
 class account;
 //Only ONE object in the system
 class account_query{
+    private:
+		char* database_name; //account_info file
+
+
 	public:
 		account_query(char *database_name);
-		
+
 		ERROR_CODE get_account_info(ACCOUNT_SEQ seq,struct account_info *info);
 
 		//The number of accounts

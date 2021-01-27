@@ -1,6 +1,10 @@
 #ifndef _ADDRESS_QUERY_H
 #define _ADDRESS_QUERY_H
 
+#include "core_type.h"
+#include <fstream>
+#include <iostream>
+using namespace std;
 
 struct vol_time{
 	CLOCK t;

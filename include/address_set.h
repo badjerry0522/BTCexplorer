@@ -1,6 +1,8 @@
 #ifndef _ADDRESS_SET_H
 #define _ADDRESS_SET_H
 #include <ostream>
+#include <fstream>
+#include <iostream>
 #include <string>
 #include "core_type.h"
 #include "trans_in_mem.h"
@@ -17,10 +19,10 @@ struct address_set_info
 	int K;          //Number of transactions
 	int Kin;       	//Number of Input transactions
 	int Kout;    	//Number of Ouput transactions
-	double V;       //balance  LONG_BTC_VOL?
-	double Vmax;  	//max balance
-	double Vin;     //vol of all input transactions
-	double Vout;    //vol of all output transactions
+	LONG_BTC_VOL V;       //balance  LONG_BTC_VOL?
+	LONG_BTC_VOL Vmax;  	//max balance
+	LONG_BTC_VOL Vin;     //vol of all input transactions
+	LONG_BTC_VOL Vout;    //vol of all output transactions
 	bool Multisig; 	//is multi address
 	int sumout;     //Number of accounts in input transactions
 	int sumin;      //Number of accoutns in output transactions 
@@ -36,8 +38,7 @@ struct address_set_info
 	float PRT1050;//The time proportion of address amount is 10% - 50% of the maximum amount
 	float PRT50;//The proportion of time when the address amount is more than 50% of the maximum amount
 	float ARANUM;//Average number of addresses involved in the transaction
-	int ANUM;//Number of addresses contained in the account
-	int TNUM; //Total number of transactions
+	
 
 	address_set_info() {
 		firsttime = 0;
@@ -64,7 +65,6 @@ struct address_set_info
 		PRT1050 = 0.0;
 		PRT50 = 0.0;
 		ARANUM = 0.0;
-		ANUM = 0;
 	}
 };
 
@@ -75,6 +75,9 @@ class address_set {
 private:
 	//Init with NULL
 	struct address_set_info *addr_set_info;
+	ADDR_SEQ* addresses;
+	int size;
+
 public:
 	//Empty Set
 	address_set();
@@ -95,7 +98,7 @@ public:
 	void set_name(string name);
 	string get_name();
 
-	int size();//The number of addresses in the address set
+	int get_size();//The number of addresses in the address set
 
 	//Add an address
 	int push_back(string btc_address);
