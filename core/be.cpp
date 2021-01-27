@@ -87,6 +87,6 @@ int main(int argn,char **argv){
 		int ret;
 		ret=run_app(cur_app,app_argn,app_argv);
 		release_argv(app_argn,app_argv);
-		if(ret==1) break;
+		if(ret==EXIT_BE) break;
 	}
 }
