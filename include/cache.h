@@ -12,10 +12,11 @@ enum CACHE_TYPE{NONE,NORMAL,FULL};
 #define LOG_LINE_SIZE 22 //log_2(LINE_SIZE)
 #define SET_SIZE (LINES*LINE_SIZE)
 #define LOG_SET_SIZE (LOG_LINES+LOG_LINE_SIZE)
-
+    
 struct line_control{
     uint64_t tag;
     uint8_t valid:1;
+    uint8_t dirty:1;
     uint8_t unused:7;
     uint32_t access_times;
     uint8_t *p;
@@ -59,6 +60,9 @@ class cache{
         ERROR_CODE load(uint64_t index, unsigned char *p);
         //Load num elements to p
         //ERROR_CODE load(uint64_t index, int num,uint8_t *p);
+
+        //Write the p to the index-th element
+        ERROR_CODE store(uint64_t index,unsigned char *p);
 
         //get the profile of cache
         void profile(uint64_t *access_time, float miss_ratio);

@@ -30,9 +30,9 @@ void getvalue(char *buf,int *i,char signal_end,struct tran_info *tp,uint32_t *re
 uint64_t getblocktime(char *ch){
     return atol(ch);
 }
-void check_length(char *buf,struct tran_info *tp,ADDR_SEQ *addr,uint32_t *vol){//check for long btc vol
+void check_length(char *buf,struct tran_info *tp,ADDR_SEQ *addr,uint32_t *vol){//check for long btc vol 
     if(tp->long_btc_vol==1) return;
-    for(int i=2;i<=tp->input_num*2;i+=2){
+    for(int i=2;i<=tp->input_num*2;i+=2){//if long_btc_vol==0 store addr and vol in uint_32t
         addr[i/2]=addr[i];
         vol[i/2]=vol[i];
     }
@@ -77,7 +77,6 @@ void parse_tran(char *buf,CLOCK *block_time,struct tran_info *tp,
             int start=i;
             while(buf[i]!=',') i++;
             int end=i-1;
-            //where to free temp
             char *temp=(char *)malloc(sizeof(char)*(end-start+1));
             strncpy(temp,buf+start,(end-start+1));
             *block_time=getblocktime(temp);
