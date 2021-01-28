@@ -5,6 +5,7 @@
 
 ACCOUNT_SEQ address_query::get_account_seq(ADDR_SEQ seq, ERROR_CODE *err)
 {
+	//seq can not <0
 	if (seq < 0)
 	{
 		*err = INVALID_ADDR_SEQ;
@@ -21,7 +22,7 @@ ACCOUNT_SEQ address_query::get_account_seq(ADDR_SEQ seq, ERROR_CODE *err)
 	{
 			std::cout << "Error: Fail to open database file." << std::endl;
 			*err = CANNOT_OPEN_FILE;
-			return 0;
+			return NULL_SEQ;
 	}
 
 

@@ -1,8 +1,15 @@
-#include "address_set.h"
+#include <set>
+#include "../include/core_type.h"
+#include "../include/address_set.h"
+
 
 //One address 
 address_set::address_set(ADDR_SEQ addr)
 {
+	aset.insert(addr);
+
+
+	//?
 	address_set_info addr_info;
 
 	ifstream file("address_info.dat", ios::binary);
@@ -15,6 +22,7 @@ address_set::address_set(ADDR_SEQ addr)
 		file.read((char*)&addr_info, sizeof(address_set));
 		file.close();
 
+		//bug!
 		this->addr_set_info = &addr_info;
 		ADDR_SEQ temp = addr;
 		this->addresses = &temp;
@@ -25,6 +33,11 @@ address_set::address_set(ADDR_SEQ addr)
 //Multi addresses 
 address_set::address_set(ADDR_SEQ *p, int num)
 {
+	for(int i=0;i<num;i++){
+		aset.insert(p[i]);
+	}
+
+	//?
 	address_set_info* addr_info = new address_set_info[num];
 	this->addresses = p;
 	
@@ -48,7 +61,7 @@ address_set::address_set(ADDR_SEQ *p, int num)
 		this->addr_set_info = &addr_info[0];
 	}
 }
-
+//Load BTC addresses file
 address_set::address_set(char *filename)
 {
 
@@ -100,8 +113,33 @@ address_set::address_set(char *filename)
 		}
 	}
 }
+int address_set::push_back(ADDR_SEQ addr){
+	if(isIn(addr)) return 1;
+	aset.insert(addr);
+	return 0;
+}
+int address_set::isIn(ADDR_SEQ addr){
+	set<ADDR_SEQ>::iterator iter;
+	iter=aset.find(addr);
+	if(iter==aset.end())
+		return 0;
+	return 1;
+}
+void address_set::set_label(LABEL l){
+	label=l;
+}
+LABEL address_set::get_label(){
+	return label;
+}
+
+void address_set::set_name(string name1){
+	name=name1;
+}
+string address_set::get_name(){
+	return name;
+}
 
 int address_set::get_size()
 {
-	return this->size;
+	return aset.size();
 }

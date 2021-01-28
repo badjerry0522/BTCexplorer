@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <map>
 #include "core_type.h"
 #include "trans_in_mem.h"
 #include "tran_set.h"
@@ -74,6 +75,10 @@ class tran_set;
 class address_set {
 private:
 	//Init with NULL
+	set<ADDR_SEQ> aset;
+	string name;
+	LABEL label;
+
 	struct address_set_info *addr_set_info;
 	ADDR_SEQ* addresses;
 	int size;
@@ -92,7 +97,7 @@ public:
 
 	//Set and get labels
 	void set_label(LABEL l);
-	LABEL get_label(LABEL l);
+	LABEL get_label();
 
 	//Set and get names
 	void set_name(string name);
@@ -101,10 +106,12 @@ public:
 	int get_size();//The number of addresses in the address set
 
 	//Add an address
+	//If addr in the set,return 1;else retrun 0
 	int push_back(string btc_address);
 	int push_back(ADDR_SEQ addr);
 
 	//judge whether the address is in this account
+	//if addr in the set return 1,else return 0
 	int isIn(string btc_address);
 	int isIn(ADDR_SEQ addr);
 
@@ -116,8 +123,8 @@ public:
 	CLOCK last_time();//The latest appearance time
 	uint64_t live_time(); //Latest appearance time - the earliest appearance time 
 
-	BTC_VOL balance();//The final amount of bitcoins
-	BTC_VOL balance(CLOCK t);//Number of bitcoins at time t	
+	LONG_BTC_VOL balance();//The final amount of bitcoins
+	LONG_BTC_VOL balance(CLOCK t);//Number of bitcoins at time t	
 	struct vol_time *balance_time();//The amount of bitcoin changes over time
 
 	tran_set *get_trans(ERROR_CODE *err);

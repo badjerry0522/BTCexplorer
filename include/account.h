@@ -6,7 +6,7 @@
 
 class address_set;
 struct account_info{
-	int WANUM = 0; //number of addresses of the account
+	//int WANUM = 0; //number of addresses of the account
 	int WMAXAPROD = 0;  //the longest active time of address in account
 	float WAVGAPROD = 0.0; //average active time of address in account
 	float WPMAXAPROD = 0.0; //= WMAXAPROD/PROD
@@ -18,7 +18,7 @@ struct account_info{
 class account:address_set{
 	private:
 		ACCOUNT_SEQ seq;
-		struct account_info *account_info;
+		//struct account_info *account_info;
 	public:
 		//create an account with an address seq and fill its account_info
 		account(ACCOUNT_SEQ seq);
