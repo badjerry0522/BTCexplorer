@@ -15,25 +15,29 @@
 #include "../include/be.h"
 using namespace std;
 struct _split_tran_set{
-    set<string> addr;  //addresses in transactions
-    vector<int> tran;  //transaction group
-    set<string> paddr;  //public address 
+    set<string> *addr;  //addresses in transactions
+    vector<int> *tran;  //transaction group
+    set<string> *paddr;  //public address 
 };
 
 //Add q to p
 int combine(struct _split_tran_set *p,struct _split_tran_set *q){
-    p->addr.insert(q->addr.begin(),q->addr.end());
-    p->tran.insert(p->tran.end(),q->tran.begin(),q->tran.end());
-    p->paddr.insert(q->paddr.begin(),q->paddr.end());
+    p->addr->insert(q->addr->begin(),q->addr->end());
+    p->tran->insert(p->tran->end(),q->tran->begin(),q->tran->end());
+    p->paddr->insert(q->paddr->begin(),q->paddr->end());
 }
-void add_paddr_set(struct addr_tran *p,int len, set<string> *addrp){
+void add_paddr_set(struct addr_tran *p,int len, struct _split_tran_set  *homes){
     string s;
     set<string>::iterator iter;
     for(int i=0;i<len;i++){
         s.assign(p[i].addr);
-        iter=addrp->find(s);
-        if(iter!=addrp->end()){
-            addrp->insert(s);
+        iter=homes->addr->find(s);
+        //found the public address
+        if(iter!=homes->addr->end()){
+ //           cout<<s<<endl;
+            iter=homes->paddr->find(s);
+            if(iter==homes->paddr->end())
+                homes->paddr->insert(s);
         }
     }
 }
@@ -51,9 +55,9 @@ int cmp_addr_list(struct addr_tran *p,int len, set<string> *addrp){
 }
 int cmp_addr(struct transaction *p,struct _split_tran_set *q){
     int ret;
-    ret=cmp_addr_list(p->inputs,p->valid_inputs,&(q->addr));
+    ret=cmp_addr_list(p->inputs,p->valid_inputs,q->addr);
     if(ret==0) return 0;
-    ret=cmp_addr_list(p->outputs,p->valid_outputs,&(q->addr));
+    ret=cmp_addr_list(p->outputs,p->valid_outputs,q->addr);
     return ret;
 }
 void add_addr_set(struct addr_tran *p,int len,set<string> *addrp){
@@ -64,17 +68,20 @@ void add_addr_set(struct addr_tran *p,int len,set<string> *addrp){
     }
 }
 void add_tran(struct transaction *p,struct _split_tran_set *s){
-    add_addr_set(p->inputs,p->valid_inputs,&(s->addr));
-    add_addr_set(p->outputs,p->valid_outputs,&(s->addr));
-    s->tran.push_back(p->seq);
-    add_paddr_set(p->inputs,p->valid_inputs,&(s->paddr));
-    add_paddr_set(p->outputs,p->valid_outputs,&(s->paddr));
+    s->tran->push_back(p->seq);
+    add_paddr_set(p->inputs,p->valid_inputs,s);
+    add_paddr_set(p->outputs,p->valid_outputs,s);
+    add_addr_set(p->inputs,p->valid_inputs,s->addr);
+    add_addr_set(p->outputs,p->valid_outputs,s->addr);
 }
 void push_list(struct transaction *p,list<struct _split_tran_set> *gp){
     struct _split_tran_set s;
-    add_addr_set(p->inputs,p->valid_inputs,&(s.addr));
-    add_addr_set(p->outputs,p->valid_outputs,&(s.addr));
-    s.tran.push_back(p->seq);
+    s.addr=new set<string>;
+    s.paddr=new set<string>;
+    s.tran=new vector<int>;
+    add_addr_set(p->inputs,p->valid_inputs,s.addr);
+    add_addr_set(p->outputs,p->valid_outputs,s.addr);
+    s.tran->push_back(p->seq);
     gp->push_back(s);
 }
 void _split_add_tran(struct transaction *p,list<struct _split_tran_set> *gp){
@@ -97,6 +104,9 @@ void _split_add_tran(struct transaction *p,list<struct _split_tran_set> *gp){
             }
             else{
                 combine(firstfind,cur);
+                delete cur->addr;
+                delete cur->paddr;
+                delete cur->tran;
                 gp->erase(iter++);
             }
         }
@@ -115,35 +125,54 @@ ERROR_CODE split_tran_app(int app_argn,void **app_argv){
     char *trans_fname=(char *)app_argv[1];
     char *result_dname=(char *)app_argv[2];
     ERROR_CODE ret;
+
     trans_file *t=new trans_file();
-    
     ret=t->open_trans_file(trans_fname);
     if(ret!=NO_ERROR)
         return ret;
     struct transaction *p=(struct transaction *)malloc(sizeof(struct transaction));
 
     t->begin();
-    
-    int trans=1;
+    int trans=0;
     while(1){
         ret=t->next(p);
         if(ret==END_OF_FILE)
             break;
-        cout<<trans<<" "<<groups.size()<<endl;
+        
+        view_transaction(p);
         trans++;
         _split_add_tran(p,&groups);
+        cout<<trans<<" "<<groups.size()<<endl;
     }
     cout<<groups.size()<<endl;
+    char paddrfname[256];
+
+    strcpy(paddrfname,(char *)app_argv[2]);
+    strcat(paddrfname,"paddrs.txt");
+    ofstream paddrfile;
+    paddrfile.open(paddrfname);
+
     int set1count=0;
     list<struct _split_tran_set>::iterator iter;
     iter=groups.begin();
     while(iter!=groups.end()){
-        if(iter->tran.size()>1){
-            cout<<iter->tran.size()<<endl;
+        if(iter->tran->size()>1){
+            cout<<iter->tran->size()<<endl;
+            paddrfile<<iter->addr->size()<<" "<<iter->tran->size()<<" "<<iter->paddr->size()<<endl;
+            set<string>::iterator paddriter=iter->paddr->begin();
+            
+            while(paddriter!=iter->paddr->end()){
+                paddrfile<<*paddriter<<endl;
+                paddriter++;
+            }
+            
+            paddrfile<<"--------------"<<endl;
+
             set1count++;
         }
         iter++;
     }
+    paddrfile.close();
     cout<<set1count<<endl;
     return NO_ERROR;
 

@@ -2,6 +2,7 @@
 #define _TRAN_SET_H
 #include <iostream>
 #include <string>
+#include <set>
 #include "core_type.h"
 #include "trans_in_mem.h"
 #include "address_set.h"

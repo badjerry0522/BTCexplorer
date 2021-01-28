@@ -17,6 +17,8 @@ using namespace std;
 
 extern struct app_record graphviz_record;
 extern struct app_record split_tran_record;
+extern struct app_record select_tran_record;
+
 ERROR_CODE BEbuildin_bye(int argn,void **argv){
 	return EXIT_BE;
 }
@@ -77,6 +79,8 @@ int main(int argn,char **argv){
 	app->add_app(&bye_record);
 	app->add_app(&graphviz_record);
 	app->add_app(&split_tran_record);
+	app->add_app(&select_tran_record);
+	
 	while(1){
 		cout<<"%";
 		cin.getline(cmdline,1023);

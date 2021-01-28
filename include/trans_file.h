@@ -45,4 +45,16 @@ class trans_file{
 		int get_tran_num();
 		~trans_file();
 };
+class output_trans_file{
+	private:
+		ofstream fout;
+		int tran_num;
+	public:
+		output_trans_file();
+		ERROR_CODE  open_trans_file(char* filename);
+		ERROR_CODE  append_tran(struct transaction *p);
+		int get_tran_num();
+		~output_trans_file();
+
+};
 #endif
