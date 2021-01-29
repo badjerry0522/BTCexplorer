@@ -18,6 +18,7 @@ using namespace std;
 extern struct app_record graphviz_record;
 extern struct app_record split_tran_record;
 extern struct app_record select_tran_record;
+extern struct app_record addr_of_tran_record;
 
 ERROR_CODE BEbuildin_bye(int argn,void **argv){
 	return EXIT_BE;
@@ -50,8 +51,10 @@ void release_argv(int app_argn,void **app_argv){
 		free(app_argv[i]);
 	}
 }
-int run_app(struct app_record *ap,int app_argn,void **app_argv){
-	return ap->app_fun(app_argn,app_argv);
+ERROR_CODE run_app(struct app_record *ap,int app_argn,void **app_argv){
+	ERROR_CODE ret;
+	ret=ap->app_fun(app_argn,app_argv);
+	return ret;
 }
 int main(int argn,char **argv){
 	if(argn!=2){
@@ -80,6 +83,7 @@ int main(int argn,char **argv){
 	app->add_app(&graphviz_record);
 	app->add_app(&split_tran_record);
 	app->add_app(&select_tran_record);
+	app->add_app(&addr_of_tran_record);
 	
 	while(1){
 		cout<<"%";
@@ -90,9 +94,10 @@ int main(int argn,char **argv){
 			cout<<"Can not find this command"<<endl;
 			continue;
 		}
-		int ret;
+		ERROR_CODE ret;
 		ret=run_app(cur_app,app_argn,app_argv);
 		release_argv(app_argn,app_argv);
 		if(ret==EXIT_BE) break;
+		if(ret!=NO_ERROR) cout<<error_string(ret)<<endl;
 	}
 }

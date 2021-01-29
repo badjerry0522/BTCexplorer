@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <set>
 //#include <stream>
 #include <string.h>
 #include <stdio.h>
@@ -8,6 +9,43 @@
 
 using namespace std;
 
+void add_addr2set(struct addr_tran *p,int len,set<string> *addr_set){
+    string s;
+    for(int i=0;i<len;i++){
+        s.assign(p[i].addr);
+        set<string>::iterator iter;
+        iter=addr_set->find(s);
+        if(iter==addr_set->end())  addr_set->insert(s);
+    }
+}
+
+void output_addr_set(ofstream &out,set<string> *addr_set){
+	set<string>::iterator paddriter=addr_set->begin();
+    while(paddriter!=addr_set->end()){
+        out<<*paddriter<<endl;
+    	paddriter++;
+    }
+}
+int addr_in_set(struct addr_tran *p,int len,set<string> *addr_set,int and_flag){
+	string s;
+    set<string>::iterator iter;
+    for(int i=0;i<len;i++){
+        s.assign(p[i].addr);
+        iter=addr_set->find(s);
+        if((iter!=addr_set->end())&&(and_flag==0)){  //Find one match and and_flag==0
+            return 1;
+        }
+		if((iter==addr_set->end())&&(and_flag!=0)){  //Find one unmatch and and_flag!=0
+			return 0;
+		}
+		//One match and and_flag!=0 continue;
+		//One unmatch and and_flag==0 continue;
+    }
+	//and_flag!=0 means all addr are matched
+	//and_flag==0 means all addr are NOT matched
+	if(and_flag!=0) return 1;
+    return 0;
+}
 void view_transaction(struct transaction *t){
 	cout<<t->tran_time<<" "<<t->seq<<endl;
 	struct addr_tran *at=t->inputs;

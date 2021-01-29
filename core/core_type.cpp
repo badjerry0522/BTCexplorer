@@ -30,3 +30,16 @@ CLOCK string2CLOCK(char *str_time){
 void CLOCK2string(CLOCK time_stamp,char *str_time){
     
 }
+char *error_string(ERROR_CODE err){
+    switch(err){
+        case INVALID_ARG : return("Invalid Arguments");
+        case INVALID_ADDR_SEQ : return("Invalid Address Seq");
+        case INVALID_BTC_ADDR: return("Invalid BTC address");
+        case OUT_OF_SATOSHI: return("BTC vol is so large");
+        case CACHE_OUT_MEMORY: return("Out of memory for cache");
+        case CANNOT_OPEN_FILE: return("Can not open file");
+        case END_OF_FILE:return("End of file");
+        case ERROR_FILE: return("Eorror in file");
+    }
+    return ("Error?");
+}

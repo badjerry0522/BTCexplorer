@@ -16,6 +16,6 @@ class app_manager{
         struct app_record *begin();
         struct app_record *next();
 };
-int run_app(struct app_record *ar,int argc,void **argv);
+ERROR_CODE run_app(struct app_record *ar,int argc,void **argv);
 
 #endif

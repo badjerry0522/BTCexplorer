@@ -14,6 +14,10 @@
 #include "../include/app_manager.h"
 #include "../include/be.h"
 using namespace std;
+#define INPUT_TYPE 1
+#define OUTPUT_TYPE 2
+#define AND_TYPE 4
+
 int _addr_list_in_set(struct addr_tran *p,int len,set<string> *addr_set){
     string s;
     set<string>::iterator iter;
@@ -36,11 +40,33 @@ int _addr_in_set(struct transaction *p,set<string> *addr_set){
     return ret;
 }
 ERROR_CODE select_tran_app(int app_argn,void **app_argv){
-    if(app_argn!=3) return INVALID_ARG;
+    if(app_argn!=4) return INVALID_ARG;
     char *trans_fname=(char *)app_argv[1];
     char *addr_fname=(char *)app_argv[2];
     char *outtran_fname=(char *)app_argv[3];
-
+    char *type_str=(char *)app_argv[4];
+    int type=-1;
+    if(strcmp(type_str,"input_or")==0){
+        type=INPUT_TYPE;
+    }
+    else if(strcmp(type_str,"output_or")==0){
+        type=OUTPUT_TYPE;
+    }
+    else if(strcmp(type_str,"all_or")==0){
+        type=INPUT_TYPE+OUTPUT_TYPE;
+    }
+    if(strcmp(type_str,"input_and")==0){
+        type=INPUT_TYPE+AND_TYPE;
+    }
+    else if(strcmp(type_str,"output_and")==0){
+        type=OUTPUT_TYPE+AND_TYPE;
+    }
+    else if(strcmp(type_str,"all_and")==0){
+        type=INPUT_TYPE+OUTPUT_TYPE+AND_TYPE;
+    }
+    if(type==-1){
+        return INVALID_ARG;
+    }
     ERROR_CODE ret;
     
     trans_file *t=new trans_file();
@@ -55,7 +81,7 @@ ERROR_CODE select_tran_app(int app_argn,void **app_argv){
         return ret;
     }
     
-    set<string> addr_set;
+    set<string> *addr_set=new set<string>;
     char buffer[256];
     ifstream faddr;
     faddr.open(addr_fname,ios::in);
@@ -71,23 +97,32 @@ ERROR_CODE select_tran_app(int app_argn,void **app_argv){
 //        faddr.getline(buffer,256);
 //        addr_str.assign(buffer);
 //        cout<<addr_str<<endl;
-        addr_set.insert(addr_str);
+        addr_set->insert(addr_str);
     }
     faddr.close();
-    cout<<"addr_set "<<addr_set.size()<<endl;
+    cout<<"addr_set "<<addr_set->size()<<endl;
     
     struct transaction *p=(struct transaction *)malloc(sizeof(struct transaction));
     cout<<"Reading"<<endl;
     t->begin();
     int trans=0;
     int selected=0;
+    int need_input=type&INPUT_TYPE;
+    int need_output=type&OUTPUT_TYPE;
+    int need_and=type&AND_TYPE;
     while(1){
     //    cout<<trans<<" "<<selected<<endl;
         ret=t->next(p);
         if(ret==END_OF_FILE)
             break;
-        int ret=_addr_in_set(p,&addr_set);
-        if(ret==1){
+        int input_match,output_match;
+        if(need_input){
+            input_match=addr_in_set(p->inputs,p->valid_inputs,addr_set,need_and);
+        }
+        else input_match=1;
+        if(need_output) output_match=addr_in_set(p->outputs,p->valid_outputs,addr_set,need_and);
+        else output_match=1;
+        if((input_match==1)&&(output_match==1)){
             d->append_tran(p);
             selected++;
         }
@@ -97,10 +132,11 @@ ERROR_CODE select_tran_app(int app_argn,void **app_argv){
     }
     cout<<selected<<" of "<<trans<<endl;
     free(p);
+    delete addr_set;
     delete d;
     delete t;
     return NO_ERROR;
 
 }
 struct app_record select_tran_record={"select_tran",
-           "source_tran_file addr_list_file result_tran_file",select_tran_app};
+           "source_tran_file addr_list_file dest_tran_file [input|output|all]_[and|or]",select_tran_app};

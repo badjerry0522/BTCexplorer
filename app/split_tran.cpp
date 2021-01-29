@@ -21,10 +21,15 @@ struct _split_tran_set{
 };
 
 //Add q to p
-int combine(struct _split_tran_set *p,struct _split_tran_set *q){
+void combine(struct _split_tran_set *p,struct _split_tran_set *q){
+    //cout<<"combine p"<<p->addr->size()<<" "<<p->paddr->size()<<" "<<p->tran->size()<<endl;
+    //cout<<"combine q"<<q->addr->size()<<" "<<q->paddr->size()<<" "<<q->tran->size()<<endl;
+
     p->addr->insert(q->addr->begin(),q->addr->end());
     p->tran->insert(p->tran->end(),q->tran->begin(),q->tran->end());
     p->paddr->insert(q->paddr->begin(),q->paddr->end());
+    //cout<<"after combine p "<<p->addr->size()<<" "<<p->paddr->size()<<" "<<p->tran->size()<<endl;
+    //cout<<"after combine q "<<q->addr->size()<<" "<<q->paddr->size()<<" "<<q->tran->size()<<endl;
 }
 void add_paddr_set(struct addr_tran *p,int len, struct _split_tran_set  *homes){
     string s;
@@ -36,8 +41,10 @@ void add_paddr_set(struct addr_tran *p,int len, struct _split_tran_set  *homes){
         if(iter!=homes->addr->end()){
  //           cout<<s<<endl;
             iter=homes->paddr->find(s);
-            if(iter==homes->paddr->end())
+            if(iter==homes->paddr->end()){
                 homes->paddr->insert(s);
+//                cout<<"homes paddr size="<<homes->paddr->size()<<" "<<s<<endl;
+            }
         }
     }
 }
@@ -64,15 +71,20 @@ void add_addr_set(struct addr_tran *p,int len,set<string> *addrp){
     string s;
     for(int i=0;i<len;i++){
         s.assign(p[i].addr);
-        addrp->insert(s);
+        set<string>::iterator iter;
+        iter=addrp->find(s);
+        if(iter==addrp->end())  addrp->insert(s);
     }
 }
 void add_tran(struct transaction *p,struct _split_tran_set *s){
     s->tran->push_back(p->seq);
     add_paddr_set(p->inputs,p->valid_inputs,s);
     add_paddr_set(p->outputs,p->valid_outputs,s);
+//    cout<<"add public addr end"<<endl;
     add_addr_set(p->inputs,p->valid_inputs,s->addr);
+//    cout<<"add inputs to home"<<endl;
     add_addr_set(p->outputs,p->valid_outputs,s->addr);
+//    cout<<"add outputs to home"<<endl;
 }
 void push_list(struct transaction *p,list<struct _split_tran_set> *gp){
     struct _split_tran_set s;
@@ -84,6 +96,12 @@ void push_list(struct transaction *p,list<struct _split_tran_set> *gp){
     s.tran->push_back(p->seq);
     gp->push_back(s);
 }
+void release_node(struct _split_tran_set *p){
+    delete p->addr;
+    delete p->tran;
+    delete p->paddr;
+}
+
 void _split_add_tran(struct transaction *p,list<struct _split_tran_set> *gp){
     if(gp->size()==0){
         push_list(p,gp);
@@ -104,9 +122,7 @@ void _split_add_tran(struct transaction *p,list<struct _split_tran_set> *gp){
             }
             else{
                 combine(firstfind,cur);
-                delete cur->addr;
-                delete cur->paddr;
-                delete cur->tran;
+                release_node(cur);              
                 gp->erase(iter++);
             }
         }
@@ -120,7 +136,7 @@ ERROR_CODE split_tran_app(int app_argn,void **app_argv){
     if(app_argn!=2){
         return INVALID_ARG;
     }
-    list<struct _split_tran_set> groups;
+    list<struct _split_tran_set> *groups=new list<struct _split_tran_set>;
     struct BE_env *ev=(struct BE_env *)app_argv[0];
     char *trans_fname=(char *)app_argv[1];
     char *result_dname=(char *)app_argv[2];
@@ -139,12 +155,12 @@ ERROR_CODE split_tran_app(int app_argn,void **app_argv){
         if(ret==END_OF_FILE)
             break;
         
-        view_transaction(p);
+        //view_transaction(p);
         trans++;
-        _split_add_tran(p,&groups);
-        cout<<trans<<" "<<groups.size()<<endl;
+        _split_add_tran(p,groups);
+        cout<<trans<<" "<<groups->size()<<endl;
     }
-    cout<<groups.size()<<endl;
+    cout<<groups->size()<<endl;
     char paddrfname[256];
 
     strcpy(paddrfname,(char *)app_argv[2]);
@@ -154,8 +170,8 @@ ERROR_CODE split_tran_app(int app_argn,void **app_argv){
 
     int set1count=0;
     list<struct _split_tran_set>::iterator iter;
-    iter=groups.begin();
-    while(iter!=groups.end()){
+    iter=groups->begin();
+    while(iter!=groups->end()){
         if(iter->tran->size()>1){
             cout<<iter->tran->size()<<endl;
             paddrfile<<iter->addr->size()<<" "<<iter->tran->size()<<" "<<iter->paddr->size()<<endl;
@@ -172,7 +188,17 @@ ERROR_CODE split_tran_app(int app_argn,void **app_argv){
         }
         iter++;
     }
+
+    iter=groups->begin();
+    while(iter!=groups->end()){
+        struct _split_tran_set *cur=&(*iter);
+        release_node(cur);
+        iter++;
+    }
+    delete groups;
+    malloc_trim(0);
     paddrfile.close();
+    
     cout<<set1count<<endl;
     return NO_ERROR;
 

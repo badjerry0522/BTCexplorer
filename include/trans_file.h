@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <set>
 //#include <stream>
 #include <string.h>
 #include <stdio.h>
@@ -15,6 +16,13 @@ struct addr_tran{
 	char addr[64];
 	float bitcoin;
 };
+void add_addr2set(struct addr_tran *p,int len,set<string> *addr_set);
+void output_addr_set(ofstream &out,set<string> *addr_set);
+//if addr in p is in the set addr_set return 1 
+//                               else return 0
+//and_flag!=0 means all addr in addr_set 
+//and_flag==0 means one addr in addr_set
+int addr_in_set(struct addr_tran *p,int len,set<string> *addr_set,int and_flag);
 struct transaction{
 	int seq;
 	char tran_time[32];
@@ -24,6 +32,7 @@ struct transaction{
 	int valid_outputs;
 };
 void view_transaction(struct transaction *t);
+
 class trans_file{
 	private:
 
