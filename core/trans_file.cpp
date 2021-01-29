@@ -61,7 +61,13 @@ void view_transaction(struct transaction *t){
 	cout<<endl;
 }
 
-
+float btc_transaction(struct transaction *t){
+	float sum=0.0;
+	for(int i=0;i<t->valid_inputs;i++){
+		sum+=t->inputs[i].bitcoin;
+	}
+	return sum;
+}
 trans_file::trans_file(){
 	tran_num=0;
 }

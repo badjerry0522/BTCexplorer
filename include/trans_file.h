@@ -32,7 +32,7 @@ struct transaction{
 	int valid_outputs;
 };
 void view_transaction(struct transaction *t);
-
+float btc_transaction(struct transaction *t);
 class trans_file{
 	private:
 
