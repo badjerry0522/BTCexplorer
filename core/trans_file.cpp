@@ -70,6 +70,7 @@ float btc_transaction(struct transaction *t){
 }
 trans_file::trans_file(){
 	tran_num=0;
+	pg=NULL;
 }
 
 ERROR_CODE trans_file::open_trans_file(char *filename){
@@ -80,6 +81,16 @@ ERROR_CODE trans_file::open_trans_file(char *filename){
 	return NO_ERROR;
 }
 
+ERROR_CODE trans_file::open_trans_file(char *filename,char *progress_fname){
+	ERROR_CODE ret=open_trans_file(filename);
+	if(ret!=NO_ERROR) return ret;
+	fin.seekg(0, ios_base::end);
+    uint64_t nFileLen = fin.tellg();
+	cout<<"File size="<<nFileLen<<endl;
+	pg=new progress(progress_fname,nFileLen);
+	fin.seekg(0, ios_base::beg);
+	return NO_ERROR;
+}
 ERROR_CODE trans_file::begin(){
 	fin.seekg(0,ios::beg);
 	state=TRAN_DATE;
@@ -160,15 +171,22 @@ ERROR_CODE trans_file::next(struct transaction *p){
 	while(!fin.eof()){
 		fin.getline(buffer,256);
 		state=process(buffer,state,p);
+		if(pg!=NULL){
+			uint64_t cur_pos=fin.tellg();
+			//cout<<"cur_pos="<<cur_pos<<endl;
+			pg->value(cur_pos);
+		}
 		if(state==TRAN_DATE)
 			return NO_ERROR;
 	}
+
 	return END_OF_FILE;
 }
 int trans_file::get_tran_num(){
 	return tran_num;
 }
 trans_file::~trans_file(){
+	if(pg!=NULL) delete pg;
 	fin.close();
 }
 

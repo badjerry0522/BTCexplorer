@@ -8,8 +8,9 @@
 #include <string.h>
 #include <stdio.h>
 #include "core_type.h" 
-
+#include "status_progress.h"
 using namespace std;
+class progress;
 
 enum STATE{TRAN_DATE,INPUT,TOLINE,OUTPUT};
 struct addr_tran{
@@ -39,6 +40,7 @@ class trans_file{
 		int tran_num;
 		ifstream fin;
 		STATE state;
+		progress *pg;
 		void addtran(char *buffer,struct transaction *t);
 		void addinput(char *buffer,struct transaction *t);
 		void addoutput(char *buffer,struct transaction *t);
@@ -47,6 +49,7 @@ class trans_file{
 	public:
 		trans_file();
 		ERROR_CODE open_trans_file(char *filename);
+		ERROR_CODE open_trans_file(char *filename,char *progress_fname);
 
 		ERROR_CODE begin();
 		ERROR_CODE next(struct transaction *p);

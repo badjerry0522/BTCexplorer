@@ -30,9 +30,9 @@ struct BE_env{
    trans_in_mem *tim;
    app_manager *app;
    char *app_work_dir;
-   ostream status;
-   ostream progress;
-   ostream error;
+   char *status_fname;
+   char *progress_fname;
+   char *error_fname;
    istream keyboard; 
 };
 

@@ -143,7 +143,7 @@ ERROR_CODE split_tran_app(int app_argn,void **app_argv){
     ERROR_CODE ret;
 
     trans_file *t=new trans_file();
-    ret=t->open_trans_file(trans_fname);
+    ret=t->open_trans_file(trans_fname,ev->progress_fname);
     if(ret!=NO_ERROR)
         return ret;
     struct transaction *p=(struct transaction *)malloc(sizeof(struct transaction));
@@ -158,7 +158,7 @@ ERROR_CODE split_tran_app(int app_argn,void **app_argv){
         //view_transaction(p);
         trans++;
         _split_add_tran(p,groups);
-        cout<<trans<<" "<<groups->size()<<endl;
+        //cout<<trans<<" "<<groups->size()<<endl;
     }
     cout<<groups->size()<<endl;
     char paddrfname[256];

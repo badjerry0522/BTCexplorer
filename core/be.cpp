@@ -12,6 +12,8 @@
 #include "../include/tran_set.h"
 #include "../include/app_manager.h"
 #include "../include/be.h"
+#include "../include/be_config.h"
+
 using namespace std;
 #define MAX_APP_ARGN 10
 
@@ -57,22 +59,21 @@ ERROR_CODE run_app(struct app_record *ap,int app_argn,void **app_argv){
 	return ret;
 }
 int main(int argn,char **argv){
-	if(argn!=2){
-		cout<<"Usage: be BE_DIR"<<endl;
-		return 0;
-	}
-
-	char cmdline[1024];
+	be_config *config=new be_config();
 	app_manager *app=new app_manager();
 	struct BE_env *be_env=(struct BE_env *)malloc(sizeof(struct BE_env));
 	//init be_env
-	char app_dir[200];
-	strcpy(app_dir,argv[1]);
-	strcat(app_dir,"/app_data/");
-	be_env->app_work_dir=app_dir;
-	//printf("%s\n",be_env->app_work_dir);
 	be_env->app=app;
+	be_env->app_work_dir=(char *)config->find("AppWork_Dir");
+	be_env->error_fname=(char *)config->find("Error_File");
+	be_env->status_fname=(char *)config->find("Status_File");
+	be_env->progress_fname=(char *)config->find("Progress_File");
 
+	cout<<be_env->app_work_dir<<endl;
+	cout<<be_env->status_fname<<endl;
+	cout<<be_env->progress_fname<<endl;
+	cout<<be_env->error_fname<<endl;
+	
 	int app_argn;
 	void **app_argv=(void **)malloc(sizeof(void *)*(MAX_APP_ARGN+1));
 	//init_argv
@@ -85,6 +86,8 @@ int main(int argn,char **argv){
 	app->add_app(&select_tran_record);
 	app->add_app(&addr_of_tran_record);
 	app->add_app(&analyse_tran_record);
+
+	char cmdline[1025];
 	while(1){
 		cout<<"%";
 		cin.getline(cmdline,1023);
