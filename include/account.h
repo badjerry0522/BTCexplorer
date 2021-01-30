@@ -1,8 +1,8 @@
 #ifndef _ACCOUNT_H
 #define _ACCOUNT_H
 
-#include "core_type.h"
-#include "address_set.h"
+#include "../include/core_type.h"
+#include "../include/address_set.h"
 
 class address_set;
 struct account_info{

@@ -7,27 +7,6 @@
 address_set::address_set(ADDR_SEQ addr)
 {
 	aset.insert(addr);
-
-
-	//?
-	address_set_info addr_info;
-
-	ifstream file("address_info.dat", ios::binary);
-	if (!file) {
-		cout << "can not open file" << endl;
-	}
-	else
-	{
-		file.seekg(addr * sizeof(address_set_info), ios::beg);
-		file.read((char*)&addr_info, sizeof(address_set));
-		file.close();
-
-		//bug!
-		this->addr_set_info = &addr_info;
-		ADDR_SEQ temp = addr;
-		this->addresses = &temp;
-		this->size = 1;
-	}
 }
 
 //Multi addresses 
@@ -35,30 +14,6 @@ address_set::address_set(ADDR_SEQ *p, int num)
 {
 	for(int i=0;i<num;i++){
 		aset.insert(p[i]);
-	}
-
-	//?
-	address_set_info* addr_info = new address_set_info[num];
-	this->addresses = p;
-	
-
-	ifstream file("address_info.dat", ios::binary);
-	if (!file) {
-		cout << "can not open file" << endl;
-	}
-	else
-	{
-		for (int i = 0; i < num; i++)
-		{
-			int seq = *(p + i);
-			file.seekg(seq * sizeof(address_set_info), ios::beg);
-			file.read((char*)&addr_info[i], sizeof(address_set_info));
-			p++;
-		}
-		file.close();
-
-		this->size = num;
-		this->addr_set_info = &addr_info[0];
 	}
 }
 //Load BTC addresses file
@@ -73,45 +28,17 @@ address_set::address_set(char *filename)
 	else
 	{
 		//size of file;
-		file.seekg(0, ios::end);
-		int database_length = file.tellg();
-		int size = database_length / sizeof(ADDR_SEQ);
+		int addr;
 		file.seekg(0, ios::beg);
-
-		ADDR_SEQ* addrs = new ADDR_SEQ[size];
-		int index = 0;
-		while (file.read((char *)&addrs[index], sizeof(addrs[index])))
+		while (file.read((char *)&addr, sizeof(ADDR_SEQ)))
 		{
 			//until the end of the file
-			index++;
+			aset.insert(addr);
 		}
 		file.close();
 
-
-
-		address_set_info* addr_info = new address_set_info[size];
-
-		//open address infomation file
-		ifstream file_info("address_info.dat", ios::binary);
-		if (!file_info) {
-			cout << "can not open file" << endl;
-		}
-		else
-		{
-			index = 0;
-			while (file_info.read((char *)&addr_info[index], sizeof(addr_info[index])))
-			{
-				//until the end of the file
-				index++;
-			}
-			file_info.close();
-
-
-			this->size = size;
-			this->addr_set_info = &addr_info[0];
-			this->addresses = &addrs[0];
-		}
 	}
+	
 }
 int address_set::push_back(ADDR_SEQ addr){
 	if(isIn(addr)) return 1;
@@ -125,6 +52,12 @@ int address_set::isIn(ADDR_SEQ addr){
 		return 0;
 	return 1;
 }
+
+void address_set::set_aset(set<ADDR_SEQ> s)
+{
+	this->aset = s;
+}
+
 void address_set::set_label(LABEL l){
 	label=l;
 }
@@ -142,4 +75,34 @@ string address_set::get_name(){
 int address_set::get_size()
 {
 	return aset.size();
+}
+
+address_set address_set::operator+(const address_set &addr_set1)
+{
+
+	//add two address_set 
+	address_set addr_set2;
+	for (set<ADDR_SEQ>::iterator it = addr_set1.aset.begin(); it != addr_set1.aset.end(); it++)
+	{
+		addr_set2.aset.insert(*it);
+	}
+	for (set<ADDR_SEQ>::iterator it = this->aset.begin(); it != this->aset.end(); it++)
+	{
+		addr_set2.aset.insert(*it);
+	}
+	return addr_set2;
+}
+
+address_set address_set::operator-(const address_set &addr_set1)
+{
+	address_set addr_set2;
+	set<ADDR_SEQ> s = addr_set1.aset;
+
+	//substract two address_set
+	for (set<ADDR_SEQ>::iterator it = this->aset.begin(); it != this->aset.end(); it++)
+	{
+		if (!s.count(*it))
+			addr_set2.aset.insert(*it);
+	}
+	return addr_set2;
 }

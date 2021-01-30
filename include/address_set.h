@@ -5,9 +5,9 @@
 #include <iostream>
 #include <string>
 #include <map>
-#include "core_type.h"
-#include "trans_in_mem.h"
-#include "tran_set.h"
+#include "../include/core_type.h"
+#include "../include/trans_in_mem.h"
+#include "../include/tran_set.h"
 
 using namespace std;
 
@@ -80,7 +80,6 @@ private:
 	LABEL label;
 
 	struct address_set_info *addr_set_info;
-	ADDR_SEQ* addresses;
 	int size;
 
 public:
@@ -94,6 +93,8 @@ public:
 	address_set(ADDR_SEQ *p, int num);
 	address_set(char *filename);
 
+	//Set aset
+	void set_aset(set<ADDR_SEQ> s);
 
 	//Set and get labels
 	void set_label(LABEL l);

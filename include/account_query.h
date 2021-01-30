@@ -1,7 +1,7 @@
 #ifndef _ACCOUNT_SET_H
 #define _ACCOUNT_SET_H
-#include "core_type.h"
-#include "account.h"
+#include "../include/core_type.h"
+#include "../include/account.h"
 class account;
 //Only ONE object in the system
 class account_query{
