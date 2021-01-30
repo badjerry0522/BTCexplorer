@@ -2,7 +2,9 @@
 #include "../include/core_type.h"
 #include "../include/address_set.h"
 
-
+address_set::address_set(){
+	size=0;
+}
 //One address 
 address_set::address_set(ADDR_SEQ addr)
 {
@@ -53,11 +55,6 @@ int address_set::isIn(ADDR_SEQ addr){
 	return 1;
 }
 
-void address_set::set_aset(set<ADDR_SEQ> s)
-{
-	this->aset = s;
-}
-
 void address_set::set_label(LABEL l){
 	label=l;
 }
@@ -105,4 +102,8 @@ address_set address_set::operator-(const address_set &addr_set1)
 			addr_set2.aset.insert(*it);
 	}
 	return addr_set2;
+}
+
+address_set::~address_set(){
+
 }

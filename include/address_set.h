@@ -4,14 +4,12 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <map>
-#include "../include/core_type.h"
-#include "../include/trans_in_mem.h"
-#include "../include/tran_set.h"
+#include <set>
+#include "core_type.h"
+#include "trans_in_mem.h"
+#include "tran_set.h"
 
 using namespace std;
-
-
 
 struct address_set_info
 {

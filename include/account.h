@@ -1,8 +1,8 @@
 #ifndef _ACCOUNT_H
 #define _ACCOUNT_H
 
-#include "../include/core_type.h"
-#include "../include/address_set.h"
+#include "core_type.h"
+#include "address_set.h"
 
 class address_set;
 struct account_info{
@@ -15,17 +15,17 @@ struct account_info{
 	float WPMAXAV = 0.0; // = WMAXAV / VMAX
 	//Other special information for account 
 };
-class account:address_set{
+class account:public address_set{
 	private:
 		ACCOUNT_SEQ seq;
 		//struct account_info *account_info;
 	public:
 		//create an account with an address seq and fill its account_info
-		account(ACCOUNT_SEQ seq);
-		
+		account();
+
+		//set account_seq
+		void set_account_seq(ACCOUNT_SEQ seq);
 		ACCOUNT_SEQ get_account_seq();	//get acount seq
-		//Fill the info struct
-		ERROR_CODE get_account_info(struct account_info *info);	
 		~account();
 };
 #endif

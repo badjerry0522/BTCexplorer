@@ -35,5 +35,7 @@ struct BE_env{
    char *error_fname;
    istream keyboard; 
 };
-
+void get_account_filename(char *full_name,char *filename);
+void get_addr_filename(char *full_name,char *filename);
+void get_tim_filename(char *full_name,char *filename);
 #endif

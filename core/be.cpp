@@ -48,6 +48,7 @@ ERROR_CODE BEbuildin_help(int argn,void **argv){
 }
 struct app_record help_record={"help","Show all cmd in BE",BEbuildin_help};
 
+
 void release_argv(int app_argn,void **app_argv){
 	for(int i=1;i<app_argn;i++){
 		free(app_argv[i]);
@@ -69,10 +70,6 @@ int main(int argn,char **argv){
 	be_env->status_fname=(char *)config->find("Status_File");
 	be_env->progress_fname=(char *)config->find("Progress_File");
 
-	cout<<be_env->app_work_dir<<endl;
-	cout<<be_env->status_fname<<endl;
-	cout<<be_env->progress_fname<<endl;
-	cout<<be_env->error_fname<<endl;
 	
 	int app_argn;
 	void **app_argv=(void **)malloc(sizeof(void *)*(MAX_APP_ARGN+1));

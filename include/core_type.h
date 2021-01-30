@@ -23,7 +23,7 @@ typedef uint64_t LONG_BTC_VOL;//long btc volume
 
 #define SATOSHI 1000000000
 #define MAX_SATOSHI 4.294967295
-
+#define MAX_FNAME_SIZE 256
 
 enum ORDER{FIRST,LAST};//order of time
 

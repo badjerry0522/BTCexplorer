@@ -34,8 +34,6 @@ class address_query{
 		ADDR_SEQ get_addr_seq(string btc_addr,ERROR_CODE *err);
 		//addr_seq --> btc_addr
 		void get_btc_address(ADDR_SEQ seq,char *btc_addr,ERROR_CODE *err);
-		//addr_seq -->account_seq
-		ACCOUNT_SEQ get_account_seq(ADDR_SEQ seq,ERROR_CODE *err);
 		//fill info with config
 		void get_address_info(ADDR_SEQ seq,struct address_info *ai,int config,ERROR_CODE *err);
 		//output the addr in os with config
