@@ -1,5 +1,6 @@
 #include <math.h>
 #include "../include/core_type.h"
+#include <time.h>
 using namespace std;
 
 float Satoshi2double(BTC_VOL vol){
@@ -25,10 +26,18 @@ LONG_BTC_VOL float2LongSatoshi(float vol){
     return r;
 }
 CLOCK string2CLOCK(char *str_time){
-
+    struct tm stm;
+    strptime(str_time, "%Y-%m-%d %H:%M:%S", &stm);
+    CLOCK clock = (CLOCK)mktime(&stm);
+    // printf("%d: %s\n", (int)clock, str_time);
+    return clock;
 }
 void CLOCK2string(CLOCK time_stamp,char *str_time){
-    
+    time_t tick = (time_t)time_stamp;
+    struct tm tm;
+    tm = *localtime(&tick);
+    strftime(str_time, 20, "%Y-%m-%d %H:%M:%S", &tm);
+    // printf("%d: %s\n", (int)tick, str_time);
 }
 char *error_string(ERROR_CODE err){
     switch(err){
