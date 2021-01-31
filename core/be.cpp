@@ -26,6 +26,8 @@ extern struct app_record split_tran_record;
 extern struct app_record select_tran_record;
 extern struct app_record addr_of_tran_record;
 extern struct app_record analyse_tran_record;
+extern struct app_record account_of_addr_record;
+
 ERROR_CODE BEbuildin_bye(int argn,void **argv){
 	return EXIT_BE;
 }
@@ -90,6 +92,7 @@ int main(int argn,char **argv){
 	app->add_app(&select_tran_record);
 	app->add_app(&addr_of_tran_record);
 	app->add_app(&analyse_tran_record);
+	app->add_app(&account_of_addr_record);
 
 	char cmdline[1025];
 	while(1){

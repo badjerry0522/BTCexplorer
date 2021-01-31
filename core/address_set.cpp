@@ -107,3 +107,10 @@ address_set address_set::operator-(const address_set &addr_set1)
 address_set::~address_set(){
 
 }
+
+ADDR_SEQ address_set::begin(){
+	return NULL_SEQ;
+}
+ADDR_SEQ address_set::next(){
+	return NULL_SEQ;
+}

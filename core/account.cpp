@@ -11,5 +11,8 @@ void account::set_account_seq(ACCOUNT_SEQ seq1){
 	seq=seq1;
 }
 
+account::~account(){
+	
+}
 
 
