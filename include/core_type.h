@@ -26,6 +26,7 @@ typedef uint64_t LONG_BTC_VOL;//long btc volume
 #define MAX_FNAME_SIZE 256
 
 enum ORDER{FIRST,LAST};//order of time
+enum DIRECTION{BEFORE,AFTER};
 
 enum ADDR_TYPE{P2PKH,P2PSH,SegWit};//types of btc address
 

@@ -1,7 +1,8 @@
 #ifndef _BE_H
 #define _BE_H
 
-#include <iostream>   
+#include <iostream>  
+#include <sstream>
 
 #include "account_query.h"
 #include "account.h"
@@ -33,7 +34,8 @@ struct BE_env{
    char *status_fname;
    char *progress_fname;
    char *error_fname;
-   istream keyboard; 
+   istream keyboard;
+   ostringstream *screen;
 };
 void get_account_filename(char *full_name,char *filename);
 void get_addr_filename(char *full_name,char *filename);

@@ -27,6 +27,7 @@ extern struct app_record select_tran_record;
 extern struct app_record addr_of_tran_record;
 extern struct app_record analyse_tran_record;
 extern struct app_record account_of_addr_record;
+extern struct app_record test_record;
 
 ERROR_CODE BEbuildin_bye(int argn,void **argv){
 	return EXIT_BE;
@@ -78,7 +79,7 @@ int main(int argn,char **argv){
 	be_env->error_fname=(char *)config->find("Error_File");
 	be_env->status_fname=(char *)config->find("Status_File");
 	be_env->progress_fname=(char *)config->find("Progress_File");
-
+	be_env->screen=new ostringstream;
 	
 	int app_argn;
 	void **app_argv=(void **)malloc(sizeof(void *)*(MAX_APP_ARGN+1));
@@ -93,10 +94,13 @@ int main(int argn,char **argv){
 	app->add_app(&addr_of_tran_record);
 	app->add_app(&analyse_tran_record);
 	app->add_app(&account_of_addr_record);
-
+	app->add_app(&test_record);
+	
+	be_env->screen->seekp(ios::beg);
 	char cmdline[1025];
 	while(1){
 		cout<<"%";
+		
 		cin.getline(cmdline,1023);
 		struct app_record *cur_app;
 		cur_app=app->find_app(cmdline,&app_argn,app_argv);
@@ -106,6 +110,8 @@ int main(int argn,char **argv){
 		}
 		ERROR_CODE ret;
 		ret=run_app(cur_app,app_argn,app_argv);
+		cout<<be_env->screen->str();
+		be_env->screen->str("");
 		release_argv(app_argn,app_argv);
 		if(ret==EXIT_BE) break;
 		if(ret!=NO_ERROR) cout<<error_string(ret)<<endl;

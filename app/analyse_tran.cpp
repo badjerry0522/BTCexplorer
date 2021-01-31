@@ -19,7 +19,8 @@ struct info_trans{
 
 ERROR_CODE analyse_tran_app(int app_argn,void **app_argv){
     if(app_argn!=2) return INVALID_ARG;
-    
+
+    struct BE_env *env=(struct BE_env *)app_argv[0];
     //get arguments
     char *trans_fname=(char *)app_argv[1];
     char *dir_name=(char *)app_argv[2];
@@ -73,7 +74,7 @@ ERROR_CODE analyse_tran_app(int app_argn,void **app_argv){
     }
 
     //print the size of the map
-    cout<<data->size()<<endl;
+    *env->screen<<data->size()<<endl;
 
     //write the info in the map with GNU plot style
     iter=data->begin();
