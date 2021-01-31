@@ -13,9 +13,7 @@ class trans_in_mem;
 class tran_set{
 	public:
 		//Empty Set
-		tran_set(trans_in_mem *g);
-		//With one tran
-		tran_set(trans_in_mem *g,TRAN_SEQ seq);
+		tran_set();
 		
 		//tran_set(string filename);
 		
@@ -24,16 +22,12 @@ class tran_set{
 		//Add one tran
 		int push_back(TRAN_SEQ t);
 		
-		
 		TRAN_SEQ begin(ORDER o);
 		TRAN_SEQ next();
-		
 
 		int isIn(TRAN_SEQ seq);
-		CLOCK first_time();
-		CLOCK last_time();
-		uint64_t live_time(); 
 		
+		/*
 		tran_set *filter(ADDR_SEQ seq);
 
 		tran_set *filter(address_set *as);
@@ -43,6 +37,7 @@ class tran_set{
 		tran_set operator+(const tran_set &tran_set1);
 		tran_set operator-(const tran_set &tran_set1);
 		int output(ostream outs,int config);
+		*/
 		~tran_set();
 };
 #endif

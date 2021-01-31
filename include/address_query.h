@@ -29,7 +29,7 @@ struct address_info{
 class address_query{
 	public:
 		//Init with database name
-		address_query(char *database_name);
+		address_query(char *dir);
 		//btc_addr --> addr_seq
 		ADDR_SEQ get_addr_seq(string btc_addr,ERROR_CODE *err);
 		//addr_seq --> btc_addr
