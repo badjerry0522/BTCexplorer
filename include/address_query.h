@@ -27,6 +27,10 @@ struct address_info{
 //Queue address information
 //Only one object in system
 class address_query{
+	private:
+		char databaseconfig[MAX_FNAME_SIZE];     //Database Configuration File: host,port,user,password,database name.
+		char address_info_fname[MAX_FNAME_SIZE]; //address info file
+
 	public:
 		//Init with database name
 		address_query(char *dir);
