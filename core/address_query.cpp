@@ -1,6 +1,7 @@
 #include "../include/address_query.h"
 #include <mysql/mysql.h>
 #include <string>
+#include <string.h>
 #include <sstream>
 #include <fstream>
 
