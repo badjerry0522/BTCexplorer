@@ -83,7 +83,7 @@ ADDR_SEQ address_query::get_addr_seq(string btc_addr,ERROR_CODE *err){
     char sql[MAX_FNAME_SIZE];
     strcpy(sql,"select id from addr_id where address = '");
     strcat(sql,btc_addr.c_str());
-    strcat(sql,"';");
+    strcat(sql,"'");
 
     mysql_query(&mysql, sql);
     result = mysql_store_result(&mysql);
@@ -124,7 +124,6 @@ ERROR_CODE address_query::get_btc_address(ADDR_SEQ seq,char *btc_addr){
     seqstream << (uint32_t)seq; 
     string seqstr = seqstream.str();
     strcat(sql,seqstr.c_str());
-    strcat(sql,";");
 
     mysql_query(&mysql, sql);
     result = mysql_store_result(&mysql);
