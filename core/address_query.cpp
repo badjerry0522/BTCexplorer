@@ -146,7 +146,7 @@ void address_query::get_address_info(ADDR_SEQ seq,struct address_info *ai,int co
     ifstream file(address_info_fname, ios::binary);
     if (!file) {
         cout << "can not open file" << endl;
-        return CANNOT_OPEN_FILE;
+        return;
     }
     else {
         //get size of file
@@ -157,7 +157,7 @@ void address_query::get_address_info(ADDR_SEQ seq,struct address_info *ai,int co
         //if out of memory
         if (seq >= size) {
             cout << "INVALID ADDR_SEQ" << endl;
-            return CACHE_OUT_MEMORY;
+            return;
         }
 
         //get address info
@@ -165,7 +165,7 @@ void address_query::get_address_info(ADDR_SEQ seq,struct address_info *ai,int co
         file.read((char*)ai, sizeof(address_info));
         file.close();
     }
-	return NO_ERROR;
+	return;
 }
 
 //output the addr in os with config
