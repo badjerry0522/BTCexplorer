@@ -22,7 +22,9 @@ class account_query{
 		//addr_seq -->account information
 		ERROR_CODE get_account_info(ACCOUNT_SEQ seq,struct account_info *info);
 		//The number of accounts
-		int size();
+		ACCOUNT_SEQ account_size();
+		//The number of addresses
+		ADDR_SEQ address_size();
 		~account_query();
 };
 #endif

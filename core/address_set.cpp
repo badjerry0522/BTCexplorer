@@ -105,7 +105,7 @@ address_set address_set::operator-(const address_set &addr_set1)
 }
 
 address_set::~address_set(){
-
+	aset.clear();
 }
 
 ADDR_SEQ address_set::begin(){

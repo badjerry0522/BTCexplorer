@@ -18,6 +18,20 @@ account_query::account_query(char *account_dir){
 
     //?
     //Read the max_account_seq and max_addr_seq from meta file
+	//max_acc_seq
+	ifstream database;
+	database.open(account2addr_fname, ios::binary);
+	database.seekg(0, ios::end);
+	unsigned int database_length = database.tellg();
+	max_account_seq = database_length / sizeof(ACCOUNT_SEQ) - 2;
+	database.close();
+
+	//max_addr_seq
+	database.open(addr2account_fname, ios::binary);
+	database.seekg(0, ios::end);
+	database_length = database.tellg();
+	max_addr_seq = database_length / sizeof(ADDR_SEQ) - 1;
+	database.close();
 
 }
 ACCOUNT_SEQ account_query::get_account_seq(ADDR_SEQ seq, ERROR_CODE *err)
@@ -84,7 +98,6 @@ account* account_query::get_account_obj(ACCOUNT_SEQ seq,ERROR_CODE *err){
 
     return cur_account;
 }
-
 ERROR_CODE account_query::get_account_info(ACCOUNT_SEQ seq,struct account_info *info){
 	//Read the account information from the ACCOUNT_INFO file to p
 	ifstream file(account_info_fname, ios::binary);
@@ -109,4 +122,14 @@ ERROR_CODE account_query::get_account_info(ACCOUNT_SEQ seq,struct account_info *
 		file.close();
 	}
 	return NO_ERROR;
+}
+
+ADDR_SEQ account_query::address_size()
+{
+	return max_addr_seq + 1;
+}
+
+ACCOUNT_SEQ account_query::account_size()
+{
+	return max_account_seq + 1;
 }
