@@ -1,9 +1,11 @@
 #include "../include/address_query.h"
+#include "../include/core_type.h"
 #include <mysql/mysql.h>
 #include <string>
 #include <string.h>
 #include <sstream>
 #include <fstream>
+#include <string.h>
 
 void deleteAllMark(string &s, const string &mark){
     size_t index = 0;
