@@ -3,6 +3,7 @@
 #include "be.h"
 
 #define MAX_APP_NUM 100
+void add_app(app_manager *app);
 
 class app_manager{
     private:

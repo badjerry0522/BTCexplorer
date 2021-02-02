@@ -1,5 +1,7 @@
 #include <string.h>
 #include "../include/app_manager.h"
+
+
 app_manager::app_manager(){
     cur_app=0;
     app_num=0;
@@ -19,6 +21,7 @@ struct app_record *app_manager::find_app(char *cmdline,int *argn,void **argv){
     if(p!=NULL){
         int found=0;
         strcpy(cmd_name,p);
+        
         for(int i=0;i<app_num;i++){
             ap=&(app_list[i]);
             if(strcmp(cmd_name,ap->cmd)==0){

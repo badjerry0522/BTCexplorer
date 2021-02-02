@@ -1,9 +1,11 @@
 #include "../include/address_query.h"
+#include "../include/core_type.h"
 #include <mysql/mysql.h>
 #include <string>
 #include <string.h>
 #include <sstream>
 #include <fstream>
+#include <string.h>
 
 bool readDatabaseconfig(char *config,string strconfig[5]){
     ifstream infile; 
