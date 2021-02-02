@@ -5,7 +5,16 @@
 #include <sstream>
 #include <fstream>
 
-bool readDatabaseconfig(char *config,string strconfig[5]){
+void deleteAllMark(string &s, const string &mark){
+    size_t index = 0;
+    if(!s.empty()){
+        while((index = s.find(mark, index)) != string::npos){
+            s.erase(index, 1);
+        }
+    }
+}
+
+bool readDatabaseconfig(char *config, string strconfig[5]){
     ifstream infile; 
     infile.open(config);
     if (!infile.is_open()){
@@ -13,7 +22,7 @@ bool readDatabaseconfig(char *config,string strconfig[5]){
     }
 
     string line;
-    int datanum = 0;
+    int32_t datanum = 0;
     while(getline(infile,line))
     {
         string key;
@@ -21,26 +30,32 @@ bool readDatabaseconfig(char *config,string strconfig[5]){
         istringstream readstr(line);
         getline(readstr, key, '=');
         getline(readstr, value, '=');
+        // cout<<key<<" "<<value<<endl;
 
         //host, user, password, database, port
         //key=value
         if (key == "host"){
+            deleteAllMark(value, " ");
             strconfig[0] = value;
             datanum++;
         }
         else if (key == "user"){
+            deleteAllMark(value, " ");
             strconfig[1] = value;
             datanum++;
         }
         else if (key == "password"){
+            deleteAllMark(value, " ");
             strconfig[2] = value;
             datanum++;
         }
         else if (key == "database"){
+            deleteAllMark(value, " ");
             strconfig[3] = value;
             datanum++;
         }
         else if (key == "port"){
+            deleteAllMark(value, " ");
             strconfig[4] = value;
             datanum++;
         }
@@ -67,16 +82,25 @@ address_query::address_query(char *dir){
 ADDR_SEQ address_query::get_addr_seq(string btc_addr,ERROR_CODE *err){
     string strconfig[5];
     if (!readDatabaseconfig(databaseconfig, strconfig)){
+        *err = CANNOT_OPEN_FILE;
         return NULL_SEQ;
     }
 
-    MYSQL mysql;
+    MYSQL mysql = MYSQL();
     MYSQL_ROW row;
     MYSQL_RES *result;
-    MYSQL_FIELD *field;
+    // MYSQL_FIELD *field;
 
-    if(!mysql_real_connect(&mysql, strconfig[0].c_str(), strconfig[1].c_str(), strconfig[2].c_str(), strconfig[3].c_str(), atoi(strconfig[4].data()), NULL, 0 ))
+    // if(!mysql_real_connect(&mysql, strconfig[0].c_str(), strconfig[1].c_str(), strconfig[2].c_str(), strconfig[3].c_str(), atoi(strconfig[4].c_str()), NULL, 0 ))
+    // {
+    //     *err = ERROR_FILE;
+    //     mysql_close(&mysql);
+    //     return NULL_SEQ;
+    // }
+    if(!mysql_real_connect(&mysql, strconfig[0].c_str(), strconfig[1].c_str(), strconfig[2].c_str(), "bcaddress", atoi(strconfig[4].c_str()), NULL, 0 ))
     {
+        *err = ERROR_FILE;
+        mysql_close(&mysql);
         return NULL_SEQ;
     }
 
@@ -88,6 +112,8 @@ ADDR_SEQ address_query::get_addr_seq(string btc_addr,ERROR_CODE *err){
     mysql_query(&mysql, sql);
     result = mysql_store_result(&mysql);
     if(!result){
+        *err = INVALID_BTC_ADDR;
+        mysql_close(&mysql);
         return NULL_SEQ;
     }
 
@@ -97,6 +123,7 @@ ADDR_SEQ address_query::get_addr_seq(string btc_addr,ERROR_CODE *err){
     btc_seq = atoi((const char*)row[0]);
     mysql_close(&mysql);
 
+    *err = NO_ERROR;
     return btc_seq;
 }
 
@@ -105,17 +132,23 @@ ERROR_CODE address_query::get_btc_address(ADDR_SEQ seq,char *btc_addr){
 
     string strconfig[5];
     if (!readDatabaseconfig(databaseconfig, strconfig)){
-        return INVALID_ADDR_SEQ;
+        return CANNOT_OPEN_FILE;
     }
 
-    MYSQL mysql;
+    MYSQL mysql = MYSQL();
     MYSQL_ROW row;
     MYSQL_RES *result;
-    MYSQL_FIELD *field;
+    // MYSQL_FIELD *field;
 
-    if(!mysql_real_connect(&mysql, strconfig[0].c_str(), strconfig[1].c_str(), strconfig[2].c_str(), strconfig[3].c_str(), atoi(strconfig[4].data()), NULL, 0 ))
+    // if(!mysql_real_connect(&mysql, strconfig[0].c_str(), strconfig[1].c_str(), strconfig[2].c_str(), strconfig[3].c_str(), atoi(strconfig[4].c_str()), NULL, 0 ))
+    // {
+    //     mysql_close(&mysql);
+    //     return ERROR_FILE;
+    // }
+    if(!mysql_real_connect(&mysql, strconfig[0].c_str(), strconfig[1].c_str(), strconfig[2].c_str(), "bcaddress", atoi(strconfig[4].c_str()), NULL, 0 ))
     {
-        return INVALID_ADDR_SEQ;
+        mysql_close(&mysql);
+        return ERROR_FILE;
     }
 
     char sql[MAX_FNAME_SIZE];
@@ -128,6 +161,7 @@ ERROR_CODE address_query::get_btc_address(ADDR_SEQ seq,char *btc_addr){
     mysql_query(&mysql, sql);
     result = mysql_store_result(&mysql);
     if(!result){
+        mysql_close(&mysql);
         return INVALID_ADDR_SEQ;
     }
 
