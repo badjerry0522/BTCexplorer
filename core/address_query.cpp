@@ -412,5 +412,6 @@ void address_query::output_addr(ADDR_SEQ seq,int config){
             }
         }
     }
+    
     return;
 }
