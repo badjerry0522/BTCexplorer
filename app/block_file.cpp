@@ -17,6 +17,16 @@ void getvalue(char *buf,int *i,char signal_end,struct tran_info *tp,uint32_t *re
     strncpy(temp,buf+start,(end-start+1));
     uint64_t longres=atol(temp);
     uint64_t one=1;
+
+    //special address
+    if(buf[start]=='-'){
+        if(buf[start+1]=='1'){ longres=COINBASE_SEQ;}//cout<<"addr=-1"<<endl;}
+        else if(buf[start+1]=='2') {longres=NonStandardAddress;}//cout<<"addr=-1"<<endl;}
+        else if(buf[start+1]=='3') {longres=OpReturn;}//cout<<"addr=-3"<<endl;}
+    }
+    if(start==end) longres=NULL_SEQ;
+
+
     if(longres>(one<<32)){
         tp->long_btc_vol=1;
         res[0]=(uint32_t)longres>>32;
@@ -100,6 +110,7 @@ void parse_tran(char *buf,CLOCK *block_time,struct tran_info *tp,
             i+=12;
             if(buf[i]=='['){//get addr
                 i++;
+                
                 uint32_t res[2];
                 getvalue(buf,&i,']',tp,res);
                 addr[(tp->input_num)*2-1]=res[0];

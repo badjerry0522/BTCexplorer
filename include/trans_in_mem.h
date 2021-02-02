@@ -5,7 +5,8 @@
 #include "core_type.h"
 #include "tran_set.h"
 #include "address_set.h"
-
+#include "cache.h"
+#include "tran_vec.h"
 class tran_set;
 struct block_info{
 	CLOCK block_time;
@@ -18,7 +19,7 @@ struct tran_info{
 	uint16_t output_num;
 	uint16_t long_btc_vol;//=0,or 1
 	uint16_t unused;
-	uint64_t index;	
+	uint64_t index;	//index of uint32_t
 };
 struct addr_tran_binary{
 	ADDR_SEQ addr;
@@ -37,6 +38,11 @@ int tran_data_size(struct tran_info *tp);
 
 //Only one object in the sysytem
 class trans_in_mem{
+	private:
+		char *dir_name;
+		cache ca_block,ca_av,ca_trans,ca_addr_show_times,ca_addr_is_count;
+		uint64_t max_addr,num_trans,av_size;
+		char des_av[50],des_TIM_meta[50],des_trans[50],des_addr_show_times[50],des_addr_is_count[50];
 	public:
 		trans_in_mem(char *dir_name);
 		
@@ -61,7 +67,7 @@ class trans_in_mem{
 		//Number of transactions with seq
 		int tran_num(ADDR_SEQ seq, ERROR_CODE *err);
 		//Get the set of transaction with seq
-		tran_set *get_tran_set(ADDR_SEQ seq,ERROR_CODE *err);
+		tran_vec *get_tran_set(ADDR_SEQ seq,ERROR_CODE *err);
 
 		//Max seq of addr,tran and block
 		ADDR_SEQ max_addr_seq();

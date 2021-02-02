@@ -22,7 +22,7 @@ int ispowerof2(uint64_t d){
     if(bit1count==1) return 1;
     else return 0;
 }
-
+//wrong
 int log2(uint64_t d, ERROR_CODE *err){
     if(d==0) return 0;
     int bit1count=0;
@@ -53,7 +53,9 @@ void init_set_control(struct set_control *sc,int set_num,int lines,int linesize,
     }
 }
 void print_hit(unsigned char *p,struct set_control *sc,uint64_t index_set,uint64_t index_hit,uint64_t offset_line,int Esize){
+    //cout<<"index_set="<<index_set<<" index_hit="<<index_hit<<" offset_line="<<offset_line<<endl;
     memcpy(p,sc[index_set].l[index_hit].p+offset_line*Esize,Esize);
+    //cout<<"memcpy complete"<<endl;
 }
 int check_is_hit(struct set_control *sc,uint64_t index_set,uint64_t tag){// if hit, return the NO. of line in the set
                                                                          // else return -1
@@ -107,6 +109,7 @@ cache::cache(){
     this->fhandle=NULL;
 }
 ERROR_CODE cache::init(char *filename,int logC,int logE,uint64_t _max_index){
+    //cout<<endl<<"filename="<<filename<<endl;
     if(logC==0){
         type=NONE;
     }
@@ -116,26 +119,30 @@ ERROR_CODE cache::init(char *filename,int logC,int logE,uint64_t _max_index){
     else{
         type=NORMAL;
     }
-    this->Esize=1<<logE;
+    this->Esize=(uint64_t)1<<logE;
     this->max_index=_max_index;
-    Csize=1<<logC;
+    //cout<<"logc="<<logC<<endl;
+    Csize=(uint64_t)1<<logC;
+    //cout<<"Csize="<<Csize<<endl;
 
     uint64_t filesize=Esize*max_index;
+    //cout<<"filesize="<<filesize<<endl;
     //Check File Size=max_index*Esize
     struct stat statbuf;
     int ret;
 
     ret = stat(filename,&statbuf);
+    //cout<<"statbuf.st_size="<<statbuf.st_size<<endl;
     if(ret != 0) return ERROR_FILE;
     if(statbuf.st_size!=filesize) return ERROR_FILE;
+    //cout<<"filename="<<filename<<endl;
     this->fhandle=fopen(filename,"rb");
     if(fhandle==NULL){
+        //cout<<"fhandle=NULL"<<endl;
         return ERROR_FILE;
     }
     if(type==NONE) return NO_ERROR;
-
     if(Csize>=filesize) type=FULL;
-    
     if(type==FULL){   //type=FULL
         d=(uint8_t *)malloc(filesize);
         if(d==NULL){
@@ -153,17 +160,19 @@ ERROR_CODE cache::init(char *filename,int logC,int logE,uint64_t _max_index){
         return NO_ERROR;
     }
     //type=NORMAL
+    cout<<"type=NORMAL"<<endl;
     if(Csize<SET_SIZE){
         fclose(fhandle);
         return INVALID_ARG; //C is too small to hold one set
     } 
-    d=(uint8_t*)malloc((1<<logC));
+    d=(uint8_t*)malloc(((uint64_t)1<<logC));
     if(d==NULL){
         fclose(fhandle);
         return CACHE_OUT_MEMORY;
     }
-    log_set_num=logC-LOG_SET_SIZE+2;
-    set_num=1<<log_set_num;
+    log_set_num=logC-LOG_SET_SIZE;
+    set_num=(uint64_t)1<<log_set_num;
+    cout<<"set_num="<<set_num<<endl;
     sc=(struct set_control *)malloc(sizeof(struct set_control)*set_num);
     if(sc==NULL){
         fclose(fhandle);
@@ -191,13 +200,16 @@ ERROR_CODE cache::load(uint64_t index,unsigned char *p){
         return ERROR_FILE;
     }
     else if(type==NORMAL){
+        //cout<<"index="<<index<<endl;
         ERROR_CODE err;
         int logE=log2(Esize);
         uint64_t log_line_size=22-logE;//log of number of elements each line contains
-        set_mask=((1<<(log_set_num))-1);
-        tag_mask=((1<<(64-log_set_num-log_line_size))-1)<<(log_set_num+log_line_size);
+        //cout<<"log_line_size="<<log_line_size<<endl;
+        set_mask=(((uint64_t)1<<(log_set_num))-(uint64_t)1);
+        tag_mask=(((uint64_t)1<<(uint64_t)(64-log_set_num-log_line_size))-(uint64_t)1)<<(uint64_t)(log_set_num+log_line_size);
         uint64_t index_set=(index>>log_line_size)&set_mask;//store in which set 
         uint64_t tag=index&tag_mask;
+        //cout<<"tag="<<tag<<endl;
         uint64_t index_line=index&((1<<(log_line_size))-1);//the element's position in the line
          
 
@@ -211,8 +223,11 @@ ERROR_CODE cache::load(uint64_t index,unsigned char *p){
             index_hit=least;//replace the line fewest access_times
             read_from_disk(sc,index,index_set,index_hit,log_line_size,Esize,fhandle);
         }
+        //cout<<"read from disk complete in load"<<endl;
         update_line(sc,index_set,tag,index_hit,hit,0);//update the line_control information
+        //cout<<"update_lien complete in load"<<endl;
         print_hit(p,sc,index_set,index_hit,index_line,Esize);//copy the element to p
+        //cout<<"print_hit in load complete"<<endl;
     }
     return NO_ERROR;
 }
