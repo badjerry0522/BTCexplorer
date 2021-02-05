@@ -60,12 +60,23 @@ void printblock(struct block_info *bi,FILE *fout_block){
 }
 void get_max_addr(ADDR_SEQ *addr,ADDR_SEQ *max_addr,struct tran_info * ti){
     int len=ti->input_num+ti->output_num;
+    //cout<<"ti->index="<<ti->index<<endl;
+    //cout<<"len="<<len<<endl;
+    //cout<<"old *max_addr="<<*max_addr<<endl;
     if(ti->long_btc_vol==0){
-        for(int i=0;i<len;i++)  if(addr[i]>*max_addr) *max_addr=addr[i];
+        for(int i=1;i<=len;i++)  if(addr[i]>*max_addr){
+            if(addr[i]==COINBASE_SEQ||addr[i]==NonStandardAddress||addr[i]==OpReturn||addr[i]==NULL_SEQ) return;
+            *max_addr=addr[i];
+            //cout<<"*max_addr="<<*max_addr<<endl;
+        }
     }
     else{
-        uint64_t *addr1=(uint64_t *)addr;
-        for(int i=0;i<len;i++) if(addr[i]>*max_addr) *max_addr=(ADDR_SEQ )addr1[i];
+        for(int i=1;i<=len;i++) if(addr[i*2]>*max_addr){
+            if(addr[i*2]==COINBASE_SEQ||addr[i*2]==NonStandardAddress||addr[i*2]==OpReturn||addr[i*2]==NULL_SEQ) return;
+            *max_addr=(ADDR_SEQ )addr[i*2];
+            
+            //cout<<"*max_addr in 64="<<*max_addr<<endl;
+        }
     }
 }
 
@@ -134,7 +145,6 @@ void readtransinfo(char *buf,block_info *cur,uint64_t *nxt_index,
 }
 void creat_addr_show_times(FILE *fout_addr_show_times,uint64_t filesize){
     uint32_t temp[1];
-
     temp[0]=0;
     for(int i=0;i<filesize/4;i++) fwrite(temp,4,1,fout_addr_show_times);
 }

@@ -14,8 +14,13 @@ void getvalue(char *buf,int *i,char signal_end,struct tran_info *tp,uint32_t *re
         (*i)++;
     }
     int end=(*i)-1;
-    strncpy(temp,buf+start,(end-start+1));
+    memcpy(temp,buf+start,end-start+1);
+    //strncpy(temp,buf+start,(end-start+1));
+    //cout<<"buf[end-start+1]="<<buf[end-start+1]<<endl;
+    //cout<<"temp="<<temp<<endl;
+    temp[end-start+1]='\0';
     uint64_t longres=atol(temp);
+    //cout<<"longres="<<longres<<endl;
     uint64_t one=1;
 
     //special address
@@ -113,6 +118,7 @@ void parse_tran(char *buf,CLOCK *block_time,struct tran_info *tp,
                 
                 uint32_t res[2];
                 getvalue(buf,&i,']',tp,res);
+                //cout<<"input: res[1]="<<res[1]<<endl;
                 addr[(tp->input_num)*2-1]=res[0];
                 addr[(tp->input_num)*2]=res[1];
                 i+=10;
@@ -135,6 +141,7 @@ void parse_tran(char *buf,CLOCK *block_time,struct tran_info *tp,
                 i++;
                 uint32_t res[2];
                 getvalue(buf,&i,']',tp,res);
+                //cout<<"output: res[1]="<<res[1]<<endl;
                 addr[(tp->input_num)*2+(tp->output_num)*2-1]=res[0];
                 addr[(tp->input_num)*2+(tp->output_num)*2]=res[1];
                 i+=10;

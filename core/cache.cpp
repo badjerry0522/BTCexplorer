@@ -43,28 +43,33 @@ int log2(uint64_t d, ERROR_CODE *err){
 }
 
 void init_set_control(struct set_control *sc,int set_num,int lines,int linesize,uint8_t *d){
-    struct set_control *sp;
+    //cout<<"init set control begin"<<endl;
     for(int i=0;i<set_num;i++){
-        sp=&(sc[i]);
+      //  cout<<i<<" of "<<set_num<<endl;
         for(int j=0;j<lines;j++){
-            sp->l[j].valid=0;
-            sp->l[j].p=&(d[i*SET_SIZE+j*LINE_SIZE]);
+            sc[i].l[j].valid=0;
+            sc[i].l[j].p=&(d[i*SET_SIZE+j*LINE_SIZE]);
         }
     }
 }
-void print_hit(unsigned char *p,struct set_control *sc,uint64_t index_set,uint64_t index_hit,uint64_t offset_line,int Esize){
+void cache::print_hit(unsigned char *p){
     //cout<<"index_set="<<index_set<<" index_hit="<<index_hit<<" offset_line="<<offset_line<<endl;
-    memcpy(p,sc[index_set].l[index_hit].p+offset_line*Esize,Esize);
+    memcpy(p,sc[index_set].l[index_hit].p+index_line*Esize,Esize);
     //cout<<"memcpy complete"<<endl;
 }
-int check_is_hit(struct set_control *sc,uint64_t index_set,uint64_t tag){// if hit, return the NO. of line in the set
-                                                                         // else return -1
+void cache::print_multi_hit(unsigned char *p,int len){
+    memcpy(p,sc[index_set].l[index_hit].p+index_line*Esize,Esize*len);
+}
+int cache::check_is_hit(){// if hit, return the NO. of line in the set
+                                                       // else return -1
     for(int i=0;i<4;i++){
-        if((tag==sc[index_set].l[i].tag)&&(sc[index_set].l[i].valid!=0)) return i;
+        if(sc[index_set].l[i].valid==0) return -1;
+        //cout<<sc[index_set].l[i].tag<<endl;
+        if((tag==sc[index_set].l[i].tag)) return i;
     }
     return -1;
 }
-int getleast(struct set_control *sc,uint64_t index_set){//return the index of the line with the fewest access_times
+int cache::getleast(){//return the index of the line with the fewest access_times
     int least=0;
     for(int i=0;i<4;i++){
         if(sc[index_set].l[i].access_times<least) least=i;
@@ -72,43 +77,49 @@ int getleast(struct set_control *sc,uint64_t index_set){//return the index of th
     }
     return least;
 }
-void update_line(struct set_control *sc,uint64_t index_set,uint64_t tag,int hit_line,int hit_type,int dirty){
+void cache::update_line(int hit_type,int dirty){
     if(hit_type==0){//MISS
-        sc[index_set].l[hit_line].tag=tag;
-        sc[index_set].l[hit_line].access_times=0;
-        sc[index_set].l[hit_line].dirty=dirty;
-        sc[index_set].l[hit_line].valid=1;
+        sc[index_set].l[index_hit].tag=tag;
+        sc[index_set].l[index_hit].access_times=0;
+        sc[index_set].l[index_hit].dirty=dirty;
+        sc[index_set].l[index_hit].valid=1;
     }
     else{//HIT
-        sc[index_set].l[hit_line].access_times++;
-        sc[index_set].l[hit_line].dirty=dirty;
+        sc[index_set].l[index_hit].access_times++;
+        sc[index_set].l[index_hit].dirty=dirty;
     }
 }
-void write_to_disk(struct set_control *sc,uint64_t index,uint64_t index_set,int hit_line,int log_line_size,int Esize,FILE *fout){
-    uint64_t offset_line=((index>>log_line_size)<<log_line_size)*Esize;//offset in line
+void cache::write_to_disk(uint64_t index,FILE *fout){
+    uint64_t offset_line=((index>>log_line_size)<<log_line_size)*Esize;//the first element in the line
     int seek_result=fseek(fout,offset_line,SEEK_SET);
-    fwrite(sc[index_set].l[hit_line].p,1,LINE_SIZE,fout);
+    fwrite(sc[index_set].l[index_hit].p,1,LINE_SIZE,fout);
     /*  no update in write/read, update status in update_line
     sc[index_set].l[hit_line].dirty=0;
     sc[index_set].l[hit_line].access_times++;
     */
 }
-void write_to_cache(struct set_control *sc,uint64_t index,uint64_t index_set,int hit_line,int index_line,int Esize,unsigned char *p){
-    memcpy(sc[index_set].l[hit_line].p+(index_line*Esize),p,Esize);
+void cache::write_to_cache(unsigned char *p){
+    memcpy(sc[index_set].l[index_hit].p+(index_line*Esize),p,Esize);
 }
-ERROR_CODE read_from_disk(struct set_control *sc,uint64_t index,uint64_t index_set,//read the element inf to cache
-    int hit_line,int log_line_size,int Esize,FILE *fin){
+//read the element inf to cache
+void cache::read_from_disk(uint64_t index,FILE *fin){
     uint64_t offset_line=((index>>log_line_size)<<log_line_size)*Esize;//the position of the start of the line in disk
     int seek_result=fseek(fin,offset_line,SEEK_SET);
-    int fread_result=fread(sc[index_set].l[hit_line].p,1,LINE_SIZE,fin);//read in to cache
-    return NO_ERROR;
+    int fread_result=fread(sc[index_set].l[index_hit].p,1,LINE_SIZE,fin);//read in to cache
 }
+void cache::preparation(uint64_t index){
+    index_set=(index>>log_line_size)&set_mask;//store in which set 
+    tag=index&tag_mask;
+    index_line=index&(((uint64_t)1<<(log_line_size))-1);//the element's position in the line
+    //cout<<"log_line_size="<<log_line_size<<endl;
+}
+
 cache::cache(){
     this->sc=NULL;
     this->d=NULL;
     this->fhandle=NULL;
 }
-ERROR_CODE cache::init(char *filename,int logC,int logE,uint64_t _max_index){
+ERROR_CODE cache::init(char *filename,int logC,int _logE,uint64_t _max_index){
     //cout<<endl<<"filename="<<filename<<endl;
     if(logC==0){
         type=NONE;
@@ -119,20 +130,25 @@ ERROR_CODE cache::init(char *filename,int logC,int logE,uint64_t _max_index){
     else{
         type=NORMAL;
     }
-    this->Esize=(uint64_t)1<<logE;
-    this->max_index=_max_index;
-    //cout<<"logc="<<logC<<endl;
-    Csize=(uint64_t)1<<logC;
-    //cout<<"Csize="<<Csize<<endl;
+    logE=_logE;
+    Esize=(uint64_t)1<<logE;
 
+    Csize=(uint64_t)1<<logC;
+    log_line_size=22-logE;//log of number of elements each line contains
+
+    log_set_num=logC-(LOG_LINE_SIZE+LOG_LINES);
+    set_num=(uint64_t)1<<log_set_num;
+
+    //init mask
+    set_mask=(((uint64_t)1<<(log_set_num))-(uint64_t)1);
+    tag_mask=(((uint64_t)1<<(uint64_t)(64-log_set_num-log_line_size))-(uint64_t)1)<<(uint64_t)(log_set_num+log_line_size);
+    this->max_index=_max_index;
     uint64_t filesize=Esize*max_index;
-    //cout<<"filesize="<<filesize<<endl;
     //Check File Size=max_index*Esize
     struct stat statbuf;
     int ret;
 
     ret = stat(filename,&statbuf);
-    //cout<<"statbuf.st_size="<<statbuf.st_size<<endl;
     if(ret != 0) return ERROR_FILE;
     if(statbuf.st_size!=filesize) return ERROR_FILE;
     //cout<<"filename="<<filename<<endl;
@@ -160,7 +176,6 @@ ERROR_CODE cache::init(char *filename,int logC,int logE,uint64_t _max_index){
         return NO_ERROR;
     }
     //type=NORMAL
-    cout<<"type=NORMAL"<<endl;
     if(Csize<SET_SIZE){
         fclose(fhandle);
         return INVALID_ARG; //C is too small to hold one set
@@ -170,9 +185,6 @@ ERROR_CODE cache::init(char *filename,int logC,int logE,uint64_t _max_index){
         fclose(fhandle);
         return CACHE_OUT_MEMORY;
     }
-    log_set_num=logC-LOG_SET_SIZE;
-    set_num=(uint64_t)1<<log_set_num;
-    cout<<"set_num="<<set_num<<endl;
     sc=(struct set_control *)malloc(sizeof(struct set_control)*set_num);
     if(sc==NULL){
         fclose(fhandle);
@@ -200,34 +212,33 @@ ERROR_CODE cache::load(uint64_t index,unsigned char *p){
         return ERROR_FILE;
     }
     else if(type==NORMAL){
-        //cout<<"index="<<index<<endl;
         ERROR_CODE err;
-        int logE=log2(Esize);
-        uint64_t log_line_size=22-logE;//log of number of elements each line contains
-        //cout<<"log_line_size="<<log_line_size<<endl;
-        set_mask=(((uint64_t)1<<(log_set_num))-(uint64_t)1);
-        tag_mask=(((uint64_t)1<<(uint64_t)(64-log_set_num-log_line_size))-(uint64_t)1)<<(uint64_t)(log_set_num+log_line_size);
-        uint64_t index_set=(index>>log_line_size)&set_mask;//store in which set 
-        uint64_t tag=index&tag_mask;
-        //cout<<"tag="<<tag<<endl;
-        uint64_t index_line=index&((1<<(log_line_size))-1);//the element's position in the line
-         
+        /*
+        index_set=(index>>log_line_size)&set_mask;
+        tag=index&tag_mask;
+        index_line=index&((1<<(log_line_size))-1);//the element's position in the line
+        */
+        preparation(index);
+        //cout<<"index="<<index<<endl;
+        //line_control *lp=&(sc[index_set]);
 
-        int hit=0;
-        int index_hit=check_is_hit(sc,index_set,tag);//check hit or not
+        hit=0;
+        index_hit=check_is_hit();//check hit or not
         if(index_hit==-1) hit=0;
         else hit=1;
-        int least=getleast(sc,index_set);//the line with the fewest access_times
 
         if(hit==0){
+            least=getleast();//the line with the fewest access_times
             index_hit=least;//replace the line fewest access_times
-            read_from_disk(sc,index,index_set,index_hit,log_line_size,Esize,fhandle);
+            if(sc[index_set].l[index_hit].dirty==1){
+
+                write_to_disk(index,fhandle);//write to disk
+            }
+            read_from_disk(index,fhandle);
         }
-        //cout<<"read from disk complete in load"<<endl;
-        update_line(sc,index_set,tag,index_hit,hit,0);//update the line_control information
-        //cout<<"update_lien complete in load"<<endl;
-        print_hit(p,sc,index_set,index_hit,index_line,Esize);//copy the element to p
-        //cout<<"print_hit in load complete"<<endl;
+        //else cout<<"HIT"<<endl;
+        update_line(hit,0);//update the line_control information
+        print_hit(p);//copy the element to p
     }
     return NO_ERROR;
 }
@@ -242,38 +253,30 @@ ERROR_CODE cache::store(uint64_t index,unsigned char *p){
         return NO_ERROR;
     }
     if(type==NORMAL){
-        int logE=(int)log2(Esize);
-        uint64_t log_line_size=22-logE;//log of number of elements each line contains
-        set_mask=((1<<(log_set_num))-1);
-        //cout<<"set_num="<<set_num<<endl;
-        //cout<<"set_mask="<<set_mask<<endl;
-        tag_mask=((1<<(64-log_set_num-log_line_size))-1)<<(log_set_num+log_line_size);
-        uint64_t index_set=(index>>log_line_size)&set_mask;//store in which set 
-       // cout<<"index_set="<<index_set<<endl;
-        uint64_t tag=index&tag_mask;
-        //cout<<"tag="<<tag<<endl;
-        uint64_t index_line=index&((1<<(log_line_size))-1);//the element's position in the line
-        //cout<<"index_line="<<index_line<<endl;
-
-
-        int index_hit=check_is_hit(sc,index_set,tag);
-       // cout<<"index_hit="<<index_hit<<endl;
-        int least=getleast(sc,index_set);
-       // cout<<"least="<<least<<endl;
+        /*
+        index_set=(index>>log_line_size)&set_mask;//store in which set 
+        tag=index&tag_mask;
+        index_line=index&((1<<(log_line_size))-1);//the element's position in the line
+        */
+        preparation(index);
+        index_hit=check_is_hit();
 
 
         if(index_hit==-1){//MISS
+           // cout<<"MISS"<<endl;
+            int least=getleast();
             index_hit=least;//the line with fewest access_times
             if(sc[index_set].l[index_hit].dirty==1){
-                write_to_disk(sc,index,index_set,index_hit,log_line_size,Esize,fhandle);//write to disk
+                write_to_disk(index,fhandle);//write to disk
             }
-            read_from_disk(sc,index,index_set,index_hit,log_line_size,Esize,fhandle);//read the line from disk
-            write_to_cache(sc,index,index_set,index_hit,index_line,Esize,p);//change the specific element in the line
-            update_line(sc,index_set,tag,index_line,0,1);//update line status
+            read_from_disk(index,fhandle);//read the line from disk
+            write_to_cache(p);//change the specific element in the line
+            update_line(0,1);//update line status
         }
         else{
-            write_to_cache(sc,index,index_set,index_hit,index_line,Esize,p);//change the specific element in the line
-            update_line(sc,index_set,tag,index_hit,1,1);//update line status
+            //cout<<"HIT"<<endl;
+            write_to_cache(p);//change the specific element in the line
+            update_line(1,1);//update line status
             //cout<<"update_line complete"<<endl;
         }
         return NO_ERROR;
@@ -286,7 +289,50 @@ ERROR_CODE cache::store(uint64_t index,unsigned char *p){
     }
     return NO_ERROR;
 }
+ERROR_CODE cache::multiload(uint64_t index,int len,unsigned char *p){
+    uint64_t index_start,index_end;
+    index_start=index,index_end=index+len;
+    if(len<LINE_SIZE/Esize){
+        if((index_set)==((index_end>>log_line_size)&set_mask)){
+            //start and end have same tag
+            //means in the same line
+            preparation(index);
+            index_hit=check_is_hit();
+            if(index_hit==-1){
+                //MISS
+                index_hit=getleast();
+                if(sc[index_set].l[index_hit].dirty==1) write_to_disk(index,fhandle);
+                read_from_disk(index,fhandle);
+                update_line(0,0);
+            }
+            else{
+                //HIT
+                update_line(1,0);
+            }
+            print_multi_hit(p,len);
+            return NO_ERROR;
+        }
+        else{
+            uint64_t index_start_prev=index;//start index of first part
+            uint64_t index_start_last=((index_start>>log_line_size)+1)<<log_line_size;//start index of last part
+            int len_prev=index_start_last-index_start_prev;//length of first part
+            int len_last=len-len_prev;//length of second part
 
+            unsigned char *p1=(unsigned char *)malloc(Esize*len_prev);
+            unsigned char *p2=(unsigned char *)malloc(Esize*len_last);
+            //separately load multi elements from p1 and p2 from two different set 
+            multiload(index_start_prev,len_prev,p1);
+            multiload(index_start_last,len_last,p2);
+            
+            //copy them to p 
+            memcpy(p,p1,Esize*len_prev);
+            memcpy(p+len_prev,p2,Esize*len_last);
+
+            free(p1),free(p2);
+            return NO_ERROR;
+        }
+    }
+}
 cache::~cache(){
     if(type==NORMAL){//write all unsaved line in cache to disk
         for(uint64_t i=0;i<set_num;i++){

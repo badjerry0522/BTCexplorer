@@ -15,6 +15,7 @@ ERROR_CODE read_TIM_META(char *des_TIM_META,uint64_t *max_addr,uint64_t *num_tra
 	return NO_ERROR;
 }
 trans_in_mem::trans_in_mem(char *dir_name){
+
 	this->dir_name=dir_name;
 	strcpy(des_av,dir_name),strcpy(des_TIM_meta,dir_name),
 	strcpy(des_trans,dir_name),strcpy(des_addr_show_times,dir_name),strcpy(des_addr_is_count,dir_name);
@@ -26,6 +27,7 @@ trans_in_mem::trans_in_mem(char *dir_name){
 	ERROR_CODE err;
 	//read from TIM_META
 	err=read_TIM_META(des_TIM_meta,&max_addr,&num_trans,&av_size);
+	cout<<"max_addr="<<max_addr<<endl;
 
 	//init cache of trans
 	err=ca_trans.init(des_trans,31,4,num_trans);
@@ -41,15 +43,18 @@ trans_in_mem::trans_in_mem(char *dir_name){
 	cout<<"err of init ca_show_times="<<err<<endl;
 
 	cout<<"cache init complete"<<endl;
-
+	cout<<endl<<endl;
 	//read av to cache
 	
 	for(int i=0;i<num_trans;i++){
+		//cout<<"num_trans="<<num_trans<<endl;
 		unordered_set <uint32_t> ust;
 		if(i==num_trans/10) cout<<"10% complete"<<endl;
 		if(i==num_trans/5) cout<<"20% complete"<<endl;
-		if(i==num_trans/2) cout<<"50%c complete"<<endl;
-		cout<<"i="<<i<<endl;
+		if(i>=(int)num_trans/2) cout<<"i="<<i<<endl;
+		if(i==(int)(num_trans*0.75)) cout<<"75%complete"<<endl;
+		//if(i>=(int)(num_trans*0.99)) cout<<"i="<<i<<endl;
+		//cout<<"i="<<i<<endl;
 		struct tran_info ti;
 		ca_trans.load(i,(unsigned char *)&ti);
 		int num_addr_in_trans=ti.input_num+ti.output_num;
@@ -62,28 +67,27 @@ trans_in_mem::trans_in_mem(char *dir_name){
 			if(ti.long_btc_vol==1){
 				ca_av.load(ti.index+j*2,(unsigned char *)&temp[0]);
 				ca_av.load(ti.index+j*2+1,(unsigned char *)&temp[1]);
-		//		cout<<"temp[0]="<<temp[0]<<" temp[1]="<<temp[1]<<endl;
-		//		getchar();
+				//cout<<"temp[0]="<<temp[0]<<" temp[1]="<<temp[1]<<endl;
 			}
 			else{
 				ca_av.load(ti.index+j,(unsigned char *)&temp[1]);
 			}
-			//cout<<"temp[1]="<<temp[1]<<"  ";
+			//cout<<"temp[1]="<<temp[1]<<endl;
 			//cout<<"read from av complete"<<endl;
 			//write to times
 			uint32_t old;
 			ca_addr_show_times.load(temp[1],(unsigned char *)&old);
-			if(ust.find(temp[1])!=ust.end()){
+			//cout<<"load complete"<<endl;
+			if(ust.find(temp[1])==ust.end()){
 				old++;
 				ust.insert(temp[1]);
-				cout<<"already exist"<<endl;
 			}
+			//else cout<<"already exist"<<endl;
 			//cout<<"old="<<old<<endl;
 			ca_addr_show_times.store(temp[1],(unsigned char *)&old);
 			//cout<<"store end"<<endl;
 		}
 		//cout<<"ti.index="<<temp<<endl;
-		//getchar();
 	}
 	//
 }

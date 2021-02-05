@@ -37,14 +37,42 @@ class cache{
         struct set_control *sc;
         unsigned char *d;
         uint64_t Csize;     //size of full cache
-        int Esize;          //size of element
+        int Esize;      //size of element
+        int logE;       
         uint64_t set_mask;
         uint64_t tag_mask;
         int set_num;
         int log_set_num;
+        uint64_t log_line_size;
+
         uint64_t max_index;
         FILE* fhandle;
         CACHE_TYPE type;
+
+        uint64_t index_set;//set index when load or store is operating
+        uint64_t tag;//tag of index when load or store is operating
+        uint64_t index_line;//line index when load or store is operating
+        int hit;//if hit,0,else -1
+        int index_hit;//the line index of the hit line
+        int least;//the line to be replaced
+
+        void print_hit(unsigned char *p);
+
+        //copy multi elements to p, with the number of len
+        void print_multi_hit(unsigned char *p,int len);
+
+        //if hit, return the NO. of line in the set, else return -1
+        int check_is_hit();
+        int getleast();
+
+        //for hit_type: 0 for miss, 1 for hit   for dirty: 1 for not wirtten yet, 0 for written
+        void update_line(int hit_type,int dirty);
+        void write_to_disk(uint64_t index,FILE *fout);
+        void write_to_cache(unsigned char *p);
+
+        
+        void read_from_disk(uint64_t index,FILE *fout);
+        void preparation(uint64_t index);
     public:
         cache();
         //filename: the data filename
@@ -63,6 +91,9 @@ class cache{
 
         //Write the p to the index-th element
         ERROR_CODE store(uint64_t index,unsigned char *p);
+        //consecutive elements stored in p, start from index, read them from disk
+        ERROR_CODE multiload(uint64_t index,int len,unsigned char *p);
+
 
         //get the profile of cache
         void profile(uint64_t *access_time, float miss_ratio);
