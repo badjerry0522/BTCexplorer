@@ -67,7 +67,7 @@ class trans_in_mem{
 		//Number of transactions with seq
 		int tran_num(ADDR_SEQ seq, ERROR_CODE *err);
 		//Get the set of transaction with seq
-		tran_vec *get_tran_set(ADDR_SEQ seq,ERROR_CODE *err);
+		/*tran_vec *get_tran_set(ADDR_SEQ seq,ERROR_CODE *err);*/
 
 		//Max seq of addr,tran and block
 		ADDR_SEQ max_addr_seq();
