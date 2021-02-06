@@ -49,5 +49,6 @@ BTC_VOL float2Satoshi(float vol,ERROR_CODE *err);
 LONG_BTC_VOL float2LongSatoshi(float vol);
 CLOCK string2CLOCK(char *str_time);
 void CLOCK2string(CLOCK time_stamp,char *str_time);
+int btc_hash_6bit(char *btc_addr);
 char *error_string(ERROR_CODE err);
 #endif

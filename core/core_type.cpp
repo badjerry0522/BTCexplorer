@@ -1,4 +1,5 @@
 #include <math.h>
+#include <string.h>
 #include "../include/core_type.h"
 #include <time.h>
 using namespace std;
@@ -51,4 +52,13 @@ char *error_string(ERROR_CODE err){
         case ERROR_FILE: return("Eorror in file");
     }
     return ("Error?");
+}
+
+int btc_hash_6bit(char *btc_addr){
+    int len=strlen(btc_addr);
+    if(len==0) return 0;
+
+    int pos=len>>1;
+    unsigned char c=btc_addr[pos]+btc_addr[pos+1];
+    return c&0x3f;
 }
