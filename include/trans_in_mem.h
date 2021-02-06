@@ -7,7 +7,8 @@
 #include "address_set.h"
 #include "cache.h"
 #include "tran_vec.h"
-class tran_set;
+class tran_vec;
+
 struct block_info{
 	CLOCK block_time;
 	TRAN_SEQ first_tran_seq;
