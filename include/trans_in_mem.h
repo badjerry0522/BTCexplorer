@@ -42,7 +42,7 @@ class trans_in_mem{
 		char *dir_name;
 		cache ca_block,ca_av,ca_trans,ca_addr_show_times,ca_addr_is_count;
 		uint64_t max_addr,num_trans,av_size;
-		char des_av[50],des_TIM_meta[50],des_trans[50],des_addr_show_times[50],des_addr_is_count[50];
+		char des_av[100],des_TIM_meta[100],des_trans[100],des_addr_show_times[100],des_addr_is_count[100];
 	public:
 		trans_in_mem(char *dir_name);
 		

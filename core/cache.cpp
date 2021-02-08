@@ -90,6 +90,7 @@ void cache::update_line(int hit_type,int dirty){
     }
 }
 void cache::write_to_disk(uint64_t index,FILE *fout){
+    //cout<<"write to disk begin"<<endl;
     uint64_t offset_line=((index>>log_line_size)<<log_line_size)*Esize;//the first element in the line
     int seek_result=fseek(fout,offset_line,SEEK_SET);
     fwrite(sc[index_set].l[index_hit].p,1,LINE_SIZE,fout);
@@ -120,7 +121,8 @@ cache::cache(){
     this->fhandle=NULL;
 }
 ERROR_CODE cache::init(char *filename,int logC,int _logE,uint64_t _max_index){
-    //cout<<endl<<"filename="<<filename<<endl;
+    strcpy(this->filename,filename);
+    //cout<<"filename="<<filename<<endl;
     if(logC==0){
         type=NONE;
     }
@@ -150,9 +152,9 @@ ERROR_CODE cache::init(char *filename,int logC,int _logE,uint64_t _max_index){
 
     ret = stat(filename,&statbuf);
     if(ret != 0) return ERROR_FILE;
+    //cout<<"stabuf.st_size="<<statbuf.st_size<<"  filesize="<<filesize<<endl;
     if(statbuf.st_size!=filesize) return ERROR_FILE;
-    //cout<<"filename="<<filename<<endl;
-    this->fhandle=fopen(filename,"rb");
+    this->fhandle=fopen(filename,"rb+");
     if(fhandle==NULL){
         //cout<<"fhandle=NULL"<<endl;
         return ERROR_FILE;
@@ -165,8 +167,12 @@ ERROR_CODE cache::init(char *filename,int logC,int _logE,uint64_t _max_index){
             fclose(fhandle);
             return CACHE_OUT_MEMORY;
         }
+        //cout<<"fread begin"<<endl;
         uint64_t freadret=fread(d, Esize,max_index,fhandle);
-        if(freadret!=filesize){
+        //cout<<"freadret="<<freadret<<"  filesize="<<filesize<<endl;
+        //cout<<"fread end"<<endl;
+//getchar();
+        if(freadret*Esize!=filesize){
             free(d);
             fclose(fhandle);
             return ERROR_FILE;
@@ -176,6 +182,7 @@ ERROR_CODE cache::init(char *filename,int logC,int _logE,uint64_t _max_index){
         return NO_ERROR;
     }
     //type=NORMAL
+   // cout<<"type="<<type<<endl;
     if(Csize<SET_SIZE){
         fclose(fhandle);
         return INVALID_ARG; //C is too small to hold one set
@@ -244,12 +251,17 @@ ERROR_CODE cache::load(uint64_t index,unsigned char *p){
 }
 
 ERROR_CODE cache::store(uint64_t index,unsigned char *p){
+    //cout<<"store begin"<<endl;
+    //fhandle=fopen(this->filename,"rb+");
     uint64_t offset;
     if(index>max_index) return INVALID_ARG;
     if(type==FULL){
+        //cout<<"FULL IN STORE"<<endl;
         offset=index*Esize;
+        //cout<<"offset="<<offset<<endl;
         memcpy(d+offset,p,Esize);
-        fwrite(p,Esize,1,fhandle);
+        //fhandle=fseek(fhandle,0,SEEK_SET);
+        //fwrite(p,Esize,1,fhandle);
         return NO_ERROR;
     }
     if(type==NORMAL){
@@ -334,15 +346,30 @@ ERROR_CODE cache::multiload(uint64_t index,int len,unsigned char *p){
     }
 }
 cache::~cache(){
+   // cout<<"~cache begin"<<endl;
     if(type==NORMAL){//write all unsaved line in cache to disk
+    //cout<<"NORMAL in ~cache"<<endl;
+//getchar();
         for(uint64_t i=0;i<set_num;i++){
             for(uint64_t j=0;j<4;j++){
                 if(sc[i].l[j].dirty==1){
-                    uint64_t offset_line=sc[i].l[j].tag+(uint64_t)(i<<(22-(int)log2(Esize)));//begin pos of the line
+                    uint64_t offset_line=sc[i].l[j].tag+(uint64_t)(i<<log_line_size);//begin pos of the line
+                    fseek(fhandle,offset_line,SEEK_SET);
                     fwrite(sc[i].l[j].p+offset_line,LINE_SIZE,1,fhandle);//write to disk
                 }
             }
         }
+    }
+    else if(type==FULL){
+      //  cout<<"FULL in ~cache"<<endl;
+//getchar();
+        fhandle=fopen(filename,"rb+");
+        if(fhandle==NULL){
+      //      cout<<"fhandle==NULL"<<endl;
+        }
+       // cout<<"fseek complete"<<endl;
+//getchar();
+        fwrite(d,Esize*max_index,1,fhandle);
     }
     if(fhandle!=NULL) fclose(fhandle);
     if(d!=NULL) free(d);

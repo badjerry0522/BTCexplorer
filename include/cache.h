@@ -46,6 +46,7 @@ class cache{
         uint64_t log_line_size;
 
         uint64_t max_index;
+        char filename[200];
         FILE* fhandle;
         CACHE_TYPE type;
 

@@ -14,15 +14,18 @@ ERROR_CODE read_TIM_META(char *des_TIM_META,uint64_t *max_addr,uint64_t *num_tra
 	fin_TIM_META>>version>>block_num>>*num_trans>>*max_addr>>*av_size;
 	return NO_ERROR;
 }
-trans_in_mem::trans_in_mem(char *dir_name){
+trans_in_mem::trans_in_mem(char dir_name[200]){
 
 	this->dir_name=dir_name;
 	strcpy(des_av,dir_name),strcpy(des_TIM_meta,dir_name),
-	strcpy(des_trans,dir_name),strcpy(des_addr_show_times,dir_name),strcpy(des_addr_is_count,dir_name);
-	strcat(des_av,"av.txt"),strcat (des_TIM_meta,"TIM_meta.txt"),strcat(des_trans,"trans.txt"),
-	strcat(des_addr_show_times,"addr_show_times.txt"),strcat(des_addr_is_count,"addr_is_count.txt");
+	strcpy(des_trans,dir_name),strcpy(des_addr_show_times,dir_name);//strcpy(des_addr_is_count,dir_name);
+	strcat(des_av,"/av.txt"),strcat (des_TIM_meta,"/TIM_meta.txt"),strcat(des_trans,"/trans.txt"),
+	strcat(des_addr_show_times,"/addr_show_times.txt");//strcat(des_addr_is_count,"/addr_is_count.txt");
 	
 	cout<<"des_trans="<<des_trans<<endl;
+	cout<<"length of des_trans="<<strlen(des_trans)<<endl;
+	cout<<"des_av="<<des_av<<endl;
+//getchar();
 
 	ERROR_CODE err;
 	//read from TIM_META
@@ -36,10 +39,10 @@ trans_in_mem::trans_in_mem(char *dir_name){
 	err=ca_av.init(des_av,31,2,av_size/4);
 	cout<<"err of init ca_av="<<err<<endl;
 
-	err=ca_addr_is_count.init(des_addr_is_count,31,2,max_addr);
-	cout<<"err of init ca_addr_is_count="<<err<<endl;
+	//err=ca_addr_is_count.init(des_addr_is_count,31,2,max_addr);
+	//cout<<"err of init ca_addr_is_count="<<err<<endl;
 
-	err=ca_addr_show_times.init(des_addr_show_times,31,2,max_addr);
+	err=ca_addr_show_times.init(des_addr_show_times,32,2,max_addr);
 	cout<<"err of init ca_show_times="<<err<<endl;
 
 	cout<<"cache init complete"<<endl;
@@ -51,9 +54,9 @@ trans_in_mem::trans_in_mem(char *dir_name){
 		unordered_set <uint32_t> ust;
 		if(i==num_trans/10) cout<<"10% complete"<<endl;
 		if(i==num_trans/5) cout<<"20% complete"<<endl;
-		if(i>=(int)num_trans/2) cout<<"i="<<i<<endl;
+		if(i==(int)num_trans/2) cout<<"50% complete"<<endl;
 		if(i==(int)(num_trans*0.75)) cout<<"75%complete"<<endl;
-		//if(i>=(int)(num_trans*0.99)) cout<<"i="<<i<<endl;
+		if(i>=(int)(num_trans*0.99)) cout<<"i="<<i<<endl;
 		//cout<<"i="<<i<<endl;
 		struct tran_info ti;
 		ca_trans.load(i,(unsigned char *)&ti);
@@ -75,7 +78,7 @@ trans_in_mem::trans_in_mem(char *dir_name){
 			//cout<<"temp[1]="<<temp[1]<<endl;
 			//cout<<"read from av complete"<<endl;
 			//write to times
-			uint32_t old;
+			uint32_t old=0;
 			ca_addr_show_times.load(temp[1],(unsigned char *)&old);
 			//cout<<"load complete"<<endl;
 			if(ust.find(temp[1])==ust.end()){
