@@ -73,6 +73,7 @@ bool readDatabaseconfig(char *config, string strconfig[5]){
 
 //Init with database name
 address_query::address_query(char *dir){
+    strcpy(dirname,dir);
     strcpy(databaseconfig,dir);
     strcat(databaseconfig,"databaseconfig");
 
@@ -81,7 +82,13 @@ address_query::address_query(char *dir){
 }
 
 //btc_addr --> addr_seq
-ADDR_SEQ address_query::get_addr_seq(string btc_addr,ERROR_CODE *err){
+ADDR_SEQ address_query::get_addr_seq(char* btc_addr,ERROR_CODE *err){
+
+    char BTC2seqdir[MAX_FNAME_SIZE];
+    strcpy(BTC2seqdir,dirname);
+    strcat(BTC2seqdir,"BTC2seq/");
+    return search_btc(BTC2seqdir,btc_addr,err);
+/*
     string strconfig[5];
     if (!readDatabaseconfig(databaseconfig, strconfig)){
         *err = CANNOT_OPEN_FILE;
@@ -127,11 +134,16 @@ ADDR_SEQ address_query::get_addr_seq(string btc_addr,ERROR_CODE *err){
 
     *err = NO_ERROR;
     return btc_seq;
+*/
 }
 
 //addr_seq --> btc_addr
 ERROR_CODE address_query::get_btc_address(ADDR_SEQ seq,char *btc_addr){
-
+    char seq2BTCdir[MAX_FNAME_SIZE];
+    strcpy(seq2BTCdir,dirname);
+    strcat(seq2BTCdir,"seq2BTC/");
+    return search_addr_seq(seq,seq2BTCdir,btc_addr);
+/*
     string strconfig[5];
     if (!readDatabaseconfig(databaseconfig, strconfig)){
         return CANNOT_OPEN_FILE;
@@ -173,6 +185,7 @@ ERROR_CODE address_query::get_btc_address(ADDR_SEQ seq,char *btc_addr){
     mysql_close(&mysql);
 
     return NO_ERROR;
+*/
 }
 
 //fill info with config

@@ -6,6 +6,12 @@
 #include <iostream>
 using namespace std;
 
+//addr_seq  --->  BTC_addr
+ERROR_CODE search_addr_seq(ADDR_SEQ seq, char *destdname,char *btc_addr);
+
+//BTC address ---> addr_seq
+ADDR_SEQ search_btc(char *destdname,char *btc_addr,ERROR_CODE *err);
+
 struct vol_time{
 	CLOCK t;
 	BTC_VOL vol;
@@ -28,6 +34,7 @@ struct address_info{
 //Only one object in system
 class address_query{
 	private:
+		char dirname[MAX_FNAME_SIZE];
 		char databaseconfig[MAX_FNAME_SIZE];     //Database Configuration File: host,port,user,password,database name.
 		char address_info_fname[MAX_FNAME_SIZE]; //address info file
 
@@ -35,7 +42,7 @@ class address_query{
 		//Init with database name
 		address_query(char *dir);
 		//btc_addr --> addr_seq
-		ADDR_SEQ get_addr_seq(string btc_addr,ERROR_CODE *err);
+		ADDR_SEQ get_addr_seq(char* btc_addr,ERROR_CODE *err);
 		//addr_seq --> btc_addr
 		ERROR_CODE get_btc_address(ADDR_SEQ seq,char *btc_addr);
 		//fill info with config

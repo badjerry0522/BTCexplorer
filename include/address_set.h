@@ -74,6 +74,7 @@ class address_set {
 private:
 	//Init with NULL
 	set<ADDR_SEQ> aset;
+	set<ADDR_SEQ>::iterator iter;
 	string name;
 	LABEL label;
 

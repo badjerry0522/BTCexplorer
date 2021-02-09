@@ -82,7 +82,7 @@ account* account_query::get_account_obj(ACCOUNT_SEQ seq,ERROR_CODE *err){
 	//file.seekg((seq+1) * sizeof(int), ios::beg);
 	file.read((char*)&end, sizeof(int));
 	file.close();
-
+	//cout<<begin<<" "<<end<<endl;
 	//from addr_list file into aset
 	account *cur_account=new account();
     cur_account->set_account_seq(seq);
@@ -92,6 +92,7 @@ account* account_query::get_account_obj(ACCOUNT_SEQ seq,ERROR_CODE *err){
 	{
 		ADDR_SEQ addr_id ;
 		file2.read((char*)&addr_id, sizeof(ADDR_SEQ));
+//		cout<<"Read from file:"<<addr_id<<endl;
 		cur_account->push_back(addr_id);
 	}
 	file2.close();
