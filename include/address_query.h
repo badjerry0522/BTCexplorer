@@ -37,6 +37,7 @@ class address_query{
 		char dirname[MAX_FNAME_SIZE];
 		char databaseconfig[MAX_FNAME_SIZE];     //Database Configuration File: host,port,user,password,database name.
 		char address_info_fname[MAX_FNAME_SIZE]; //address info file
+		char addr2account_fname[MAX_FNAME_SIZE]; //address to account file
 
 	public:
 		//Init with database name

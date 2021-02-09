@@ -1,11 +1,12 @@
 #include "../include/address_query.h"
 #include "../include/core_type.h"
-#include <mysql/mysql.h>
 #include <string>
 #include <string.h>
 #include <sstream>
 #include <fstream>
 #include <string.h>
+#include <regex.h>
+// #include <mysql/mysql.h>
 
 void deleteAllMark(string &s, const string &mark){
     size_t index = 0;
@@ -29,6 +30,9 @@ bool readDatabaseconfig(char *config, string strconfig[5]){
     {
         string key;
         string value;
+        deleteAllMark(line, " ");
+        deleteAllMark(line, "\n");
+        deleteAllMark(line, "\r");
         istringstream readstr(line);
         getline(readstr, key, '=');
         getline(readstr, value, '=');
@@ -37,27 +41,22 @@ bool readDatabaseconfig(char *config, string strconfig[5]){
         //host, user, password, database, port
         //key=value
         if (key == "host"){
-            deleteAllMark(value, " ");
             strconfig[0] = value;
             datanum++;
         }
         else if (key == "user"){
-            deleteAllMark(value, " ");
             strconfig[1] = value;
             datanum++;
         }
         else if (key == "password"){
-            deleteAllMark(value, " ");
             strconfig[2] = value;
             datanum++;
         }
         else if (key == "database"){
-            deleteAllMark(value, " ");
             strconfig[3] = value;
             datanum++;
         }
         else if (key == "port"){
-            deleteAllMark(value, " ");
             strconfig[4] = value;
             datanum++;
         }
@@ -71,6 +70,44 @@ bool readDatabaseconfig(char *config, string strconfig[5]){
     return true;
 }
 
+//enum ADDR_TYPE{P2PKH,P2PSH,SegWit};//types of btc address
+ADDR_TYPE getADDR_TYPE(char *address){
+
+    regex_t reP2PKH;
+    const char *pattern1 = "^1[a-zA-Z0-9]*$";
+    regcomp(&reP2PKH, pattern1, REG_EXTENDED);
+
+    regex_t reP2PSH;
+    const char *pattern2 = "^3[a-zA-Z0-9]*$";
+    regcomp(&reP2PSH, pattern2, REG_EXTENDED);
+
+    regex_t reSegWit;
+    const char *pattern3 = "^bc1[a-zA-Z0-9]*$";
+    regcomp(&reSegWit, pattern3, REG_EXTENDED);
+
+    const size_t nmatch = 1;
+    regmatch_t pmatch[1];
+
+    ADDR_TYPE type = ADDR_TYPE(-1);
+
+    if (regexec(&reP2PKH, address, nmatch, pmatch, 0) == 0)
+    {
+        type = P2PKH;
+    }
+    else if (regexec(&reP2PSH, address, nmatch, pmatch, 0) == 0)
+    {
+        type = P2PSH;
+    }
+    else if (regexec(&reSegWit, address, nmatch, pmatch, 0) == 0)
+    {
+        type = SegWit;
+    }
+    regfree(&reP2PKH);
+    regfree(&reP2PSH);
+    regfree(&reSegWit);
+    return type;
+}
+
 //Init with database name
 address_query::address_query(char *dir){
     strcpy(dirname,dir);
@@ -78,7 +115,10 @@ address_query::address_query(char *dir){
     strcat(databaseconfig,"databaseconfig");
 
     strcpy(address_info_fname,dir);
-    strcat(address_info_fname,"address_info.dat");
+    strcat(address_info_fname,"address_info2.dat");
+
+    strcpy(addr2account_fname,dir);
+    strcat(addr2account_fname,"addr2account.dat");
 }
 
 //btc_addr --> addr_seq
@@ -200,7 +240,7 @@ void address_query::get_address_info(ADDR_SEQ seq,struct address_info *ai,int co
         //get size of file
         file.seekg(0, ios::end);
         int file_size = file.tellg();
-        int size = file_size / sizeof(address_info);
+        int size = file_size / sizeof(address_info2);
 
         //if out of memory
         if (seq >= size) {
@@ -208,10 +248,28 @@ void address_query::get_address_info(ADDR_SEQ seq,struct address_info *ai,int co
             return;
         }
 
-        //get address info
-        file.seekg(seq * sizeof(address_info), ios::beg);
-        file.read((char*)ai, sizeof(address_info));
+        //get address info2
+        address_info2 info2 = address_info2();
+        file.seekg(seq * sizeof(address_info2), ios::beg);
+        file.read((char*)&info2, sizeof(address_info2));
         file.close();
+
+        //get account sequence
+        ACCOUNT_SEQ acc_seq;
+        ifstream accfile(addr2account_fname, ios::binary);
+        accfile.seekg(seq * sizeof(ACCOUNT_SEQ), ios::beg);
+        accfile.read((char*)&acc_seq, sizeof(ACCOUNT_SEQ));
+        accfile.close();
+
+        //get address info
+        ai->seq = seq;
+        char btc_address[MAX_BTC_ADDRESS_LEN];
+        get_btc_address(seq, btc_address);
+        strcpy(ai->btc_address, btc_address);
+        ai->type = getADDR_TYPE(btc_address);
+        ai->info2 = info2;
+        ai->account_seq = acc_seq;
+        ai->valid = (info2.balance<0?0:1);
     }
 	return;
 }
@@ -229,7 +287,7 @@ void address_query::output_addr(ADDR_SEQ seq,ostream os,int config){
         //get size of file
         file.seekg(0, ios::end);
         int file_size = file.tellg();
-        int size = file_size / sizeof(address_info);
+        int size = file_size / sizeof(address_info2);
 
         //if out of memory
         if (seq >= size) {
@@ -237,10 +295,28 @@ void address_query::output_addr(ADDR_SEQ seq,ostream os,int config){
             return;
         }
 
-        //get address info
-        file.seekg(seq * sizeof(address_info), ios::beg);
-        file.read((char*)ai, sizeof(address_info));
+        //get address info2
+        address_info2 info2 = address_info2();
+        file.seekg(seq * sizeof(address_info2), ios::beg);
+        file.read((char*)&info2, sizeof(address_info2));
         file.close();
+
+        //get account sequence
+        ACCOUNT_SEQ acc_seq;
+        ifstream accfile(addr2account_fname, ios::binary);
+        accfile.seekg(seq * sizeof(ACCOUNT_SEQ), ios::beg);
+        accfile.read((char*)&acc_seq, sizeof(ACCOUNT_SEQ));
+        accfile.close();
+
+        //get address info
+        ai->seq = seq;
+        char btc_address[MAX_BTC_ADDRESS_LEN];
+        get_btc_address(seq, btc_address);
+        strcpy(ai->btc_address, btc_address);
+        ai->type = getADDR_TYPE(btc_address);
+        ai->info2 = info2;
+        ai->account_seq = acc_seq;
+        ai->valid = (info2.balance<0?0:1);
 
         switch (config)
         {
@@ -335,7 +411,7 @@ void address_query::output_addr(ADDR_SEQ seq,int config){
         //get size of file
         file.seekg(0, ios::end);
         int file_size = file.tellg();
-        int size = file_size / sizeof(address_info);
+        int size = file_size / sizeof(address_info2);
 
         //if out of memory
         if (seq >= size) {
@@ -343,10 +419,28 @@ void address_query::output_addr(ADDR_SEQ seq,int config){
             return;
         }
 
-        //get address info
-        file.seekg(seq * sizeof(address_info), ios::beg);
-        file.read((char*)ai, sizeof(address_info));
+        //get address info2
+        address_info2 info2 = address_info2();
+        file.seekg(seq * sizeof(address_info2), ios::beg);
+        file.read((char*)&info2, sizeof(address_info2));
         file.close();
+
+        //get account sequence
+        ACCOUNT_SEQ acc_seq;
+        ifstream accfile(addr2account_fname, ios::binary);
+        accfile.seekg(seq * sizeof(ACCOUNT_SEQ), ios::beg);
+        accfile.read((char*)&acc_seq, sizeof(ACCOUNT_SEQ));
+        accfile.close();
+
+        //get address info
+        ai->seq = seq;
+        char btc_address[MAX_BTC_ADDRESS_LEN];
+        get_btc_address(seq, btc_address);
+        strcpy(ai->btc_address, btc_address);
+        ai->type = getADDR_TYPE(btc_address);
+        ai->info2 = info2;
+        ai->account_seq = acc_seq;
+        ai->valid = (info2.balance<0?0:1);
 
         switch (config)
         {
