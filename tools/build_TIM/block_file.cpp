@@ -1,5 +1,5 @@
-#include"../include/core_type.h"
-#include"../include/trans_in_mem.h"
+#include"../../include/core_type.h"
+#include"../../include/trans_in_mem.h"
 #include<cstring>
 #include<cstdlib>
 #include<stdlib.h>
@@ -113,10 +113,14 @@ void parse_tran(char *buf,CLOCK *block_time,struct tran_info *tp,
         else if(cur_state==GetInputAV){//get input addr and vol
             tp->input_num++;
             i+=12;
+            uint32_t res[2];
             if(buf[i]=='['){//get addr
                 i++;
-                
-                uint32_t res[2];
+                if(buf[i]=='-'){
+                    i++;
+                    //if(buf[i]==1) res[0]=0,res[1]=COINBASE_SEQ;
+                    //else if(buf[i]==2) res[0]=0,res[1]=NonStandardAddress;
+                }
                 getvalue(buf,&i,']',tp,res);
                 //cout<<"input: res[1]="<<res[1]<<endl;
                 addr[(tp->input_num)*2-1]=res[0];

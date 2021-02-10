@@ -254,6 +254,7 @@ ERROR_CODE cache::store(uint64_t index,unsigned char *p){
     //cout<<"store begin"<<endl;
     //fhandle=fopen(this->filename,"rb+");
     uint64_t offset;
+    cout<<"index="<<index<<endl;
     if(index>max_index) return INVALID_ARG;
     if(type==FULL){
         //cout<<"FULL IN STORE"<<endl;

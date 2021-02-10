@@ -36,7 +36,7 @@ struct transaction_binary{
 
 //data size of one transaction (IN 32 bits WORD)
 int tran_data_size(struct tran_info *tp);
-
+ERROR_CODE generate_av(char *dir_name,char *output_dir_name);
 //Only one object in the sysytem
 class trans_in_mem{
 	private:
@@ -44,9 +44,13 @@ class trans_in_mem{
 		cache ca_block,ca_av,ca_trans,ca_addr_show_times,ca_addr_is_count;
 		uint64_t max_addr,num_trans,av_size;
 		char des_av[100],des_TIM_meta[100],des_trans[100],des_addr_show_times[100],des_addr_is_count[100];
+		ERROR_CODE check_is_addr_show_times_exist(char *dir_name);
+		
 	public:
 		trans_in_mem(char *dir_name);
-		
+		ERROR_CODE generate_empty_files(char *dir_name,uint64_t max_addr);
+		ERROR_CODE init_addr_show_times(char *dir_name);
+		ERROR_CODE generate_av(char *dir_name);
 		//Fill ti
 		ERROR_CODE get_tran_binary(TRAN_SEQ seq,struct transaction_binary *ti);
 		

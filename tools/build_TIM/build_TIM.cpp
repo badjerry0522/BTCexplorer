@@ -1,7 +1,7 @@
-#include"../include/trans_in_mem.h"
-#include"../include/build_TIM.h"
-#include"../include/core_type.h"
-#include"../include/block_file.h"
+#include"../../include/trans_in_mem.h"
+#include"../../include/build_TIM.h"
+#include"../../include/core_type.h"
+#include"../../include/block_file.h"
 #include<fstream>
 #include<cstdlib>
 #include<stdlib.h>
@@ -160,27 +160,27 @@ void build_TIM(char *blockfiles_dir, int first,char *output_dir,ERROR_CODE *err)
 
     char des_av[100];//get output des of av
     strcpy(des_av,output_dir);
-    strcat(des_av,"av.txt");
+    strcat(des_av,"/av.txt");
     FILE *fout_av=fopen(des_av,"wb");
 
     char des_block[100];//get output des of block
     strcpy(des_block,output_dir);
-    strcat(des_block,"block.txt");
+    strcat(des_block,"/block.txt");
     FILE *fout_block=fopen(des_block,"wb");
 
     char des_trans[100];//get output des of trans
     strcpy(des_trans,output_dir);
-    strcat(des_trans,"trans.txt");
+    strcat(des_trans,"/trans.txt");
     FILE *fout_trans=fopen(des_trans,"wb");
     
     char des_addr_show_times[100];
     strcpy(des_addr_show_times,output_dir);
-    strcat(des_addr_show_times,"addr_show_times.txt");
+    strcat(des_addr_show_times,"/addr_show_times.txt");
     FILE *fout_addr_show_times=fopen(des_addr_show_times,"wb");
 
     char des_addr_is_count[100];
     strcpy(des_addr_is_count,output_dir);
-    strcat(des_addr_is_count,"addr_is_count.txt");
+    strcat(des_addr_is_count,"/addr_is_count.txt");
     FILE *fout_addr_is_count=fopen(des_addr_is_count,"wb");
     
     uint32_t max_addr=0;
@@ -212,6 +212,6 @@ void build_TIM(char *blockfiles_dir, int first,char *output_dir,ERROR_CODE *err)
     ofstream fout_TIM_meta(des_TIM_meta);
     fout_TIM_meta<<version<<" "<<block_num<<" "<<trans_num<<" "<<max_addr<<" "<<av_size<<" "<<" "<<first_block_time<<" "<<last_block_time<<" "<<endl;
 
-    creat_addr_show_times(fout_addr_show_times,(uint64_t)max_addr*4);
-    creat_addr_is_count(fout_addr_is_count,(uint64_t)max_addr*4);
+    //creat_addr_show_times(fout_addr_show_times,(uint64_t)max_addr*4);
+    //creat_addr_is_count(fout_addr_is_count,(uint64_t)max_addr*4);
 }
