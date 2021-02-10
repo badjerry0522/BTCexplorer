@@ -27,6 +27,7 @@ int main(int argn, char **argv){
     char num[10];
 
     ADDR_SEQ  seq=atoi(addrseq);
+    cout<<"seq="<<seq<<endl;
     int filenum=seq/FILE_LINES+1;
     strcpy(datafname,destdname);
     strcat(datafname,"seq_btc_");
@@ -37,6 +38,7 @@ int main(int argn, char **argv){
     if(!fin.is_open()){
         cout<<"Can not find file:"<<datafname<<endl;
     }
+    cout<<"Read file:"<<datafname<<endl;
     fin.seekg(0,ios::end);
     int max_pos=fin.tellg();
     //cout<<max_pos<<endl;
@@ -44,7 +46,7 @@ int main(int argn, char **argv){
     int lines=seq%FILE_LINES;
 
     int cur_pos=lines*SIZE_PER_LINE;
-
+    
     char line[256];
     char addr_seq[20];
     char BTCaddr[200];
@@ -59,6 +61,8 @@ int main(int argn, char **argv){
             cur_pos=max_pos-SIZE_PER_LINE*50;
         }
         if(cur_pos<0) cur_pos=0;
+
+        cout<<"pos="<<cur_pos<<endl;
         
         fin.seekg(cur_pos,ios::beg);
         
@@ -87,6 +91,7 @@ int main(int argn, char **argv){
             strcpy(BTCaddr,token);
             int btclen=strlen(BTCaddr);
             int seqlen=strlen(addr_seq);
+            cout<<"seq="<<addr_seq<<endl;
             if(seqlen>0){
                 dest_seq=atoi(addr_seq);
             }
@@ -110,8 +115,9 @@ int main(int argn, char **argv){
         }
         else{  //delta<0
             delta=-delta;
-            cur_pos-=delta*SIZE_PER_LINE;
+            cur_pos-=delta*SIZE_PER_LINE*3;
         }
+        //getchar();
     }
     fin.close();
     if(out_of_max_seq==1){

@@ -109,8 +109,11 @@ address_set::~address_set(){
 }
 
 ADDR_SEQ address_set::begin(){
-	return NULL_SEQ;
+	iter=aset.begin();
+	return *iter;
 }
 ADDR_SEQ address_set::next(){
+	iter++;
+	if(iter!=aset.end()) return *iter;
 	return NULL_SEQ;
 }
