@@ -1,7 +1,8 @@
 #ifndef _ADDRESS_QUERY_H
 #define _ADDRESS_QUERY_H
 
-#include "../include/core_type.h"
+#include "core_type.h"
+#include "trans_in_mem.h"
 #include <fstream>
 #include <iostream>
 using namespace std;
@@ -46,11 +47,14 @@ class address_query{
 		ADDR_SEQ get_addr_seq(char* btc_addr,ERROR_CODE *err);
 		//addr_seq --> btc_addr
 		ERROR_CODE get_btc_address(ADDR_SEQ seq,char *btc_addr);
+		//output tran to ofstream
+		void output_tran(ostream &os,struct transaction_binary *tp);
 		//fill info with config
 		void get_address_info(ADDR_SEQ seq,struct address_info *ai,int config,ERROR_CODE *err);
 		//output the addr in os with config
 		void output_addr(ADDR_SEQ seq,ostream os,int config);
 		//output the addr info in the cout with config
 		void output_addr(ADDR_SEQ seq,int config);
+
 };
 #endif

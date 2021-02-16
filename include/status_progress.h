@@ -21,8 +21,25 @@ class progress{
         int last_value;
         struct timeval last_time;  
     public:
+        /**
+         * @brief Construct a new progress object
+         * 
+         * @param fname the progress file
+         * @param _max max value
+         */
         progress(char *fname,uint64_t _max);
+        
+        /**
+         * @brief Set the value
+         * 
+         * @param v 0<=v<=_max
+         */
         void value(uint64_t v);
+
+        /**
+         * @brief Destroy the progress object
+         * 
+         */
         ~progress();
 
 };

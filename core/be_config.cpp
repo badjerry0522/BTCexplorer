@@ -9,11 +9,12 @@ using namespace std;
 be_config::be_config(){
     set_default_value("Address_Dir","./data/address/");
     set_default_value("Account_Dir","./data/account/");
-    set_default_value("TIM_Dir","./data/tim/");
+    set_default_value("TIM_Dir","./data/trans_in_mem/");
     set_default_value("AppWork_Dir","./app_work/");
     set_default_value("Status_File","./BE_Status");
     set_default_value("Progress_File","./BE_Progress");
     set_default_value("Error_File","./BE_Error");
+    set_default_value("Addr2tran_Dir","./data/addr2tran/");
 }
 void be_config::insert(char *name,struct _config_value *p){
     string namestr;

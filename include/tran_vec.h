@@ -16,23 +16,67 @@ class tran_vec{
         int last_index;
         int step=0;
 	public:
-		//Empty Set
+		/**
+		 * @brief Construct a new tran vec object
+		 * 
+		 */
 		tran_vec();
 		
-		//Number of set
+		/**
+		 * @brief the number of transactions in this object
+		 * 
+		 * @return int 
+		 */
 		int size();
-		//Add one tran in the order of time
+		
+		/**
+		 * @brief Add one tran in the order of time
+		 * 
+		 * @param t the seq of transaction, it should greater than the other ones in the object 
+		 * @return ERROR_CODE 
+		 */
 		ERROR_CODE push_back(TRAN_SEQ t);
-		//list all tran_seq from the oldest to the last
-        TRAN_SEQ begin();
-        TRAN_SEQ begin(ORDER o);
-        //list all tran_seq with differenct DIRECTION(BEFORE or AFTER) of the t
-        //in spacial order
-		TRAN_SEQ begin(TRAN_SEQ seq,DIRECTION d,ORDER o);
-		TRAN_SEQ next();
 
-        //If seq is NOT in the vec return -1
-        //                    else return the index of it
+		
+        /**
+         * @brief list all tran_seq from the oldest to the last
+         * 
+         * @return TRAN_SEQ first trna_seq
+         */
+		TRAN_SEQ begin();
+
+		/**
+		 * @brief list all tran_seq accroding to the order
+		 * 
+		 * @param o FIRST | LAST, FIRST: from the oldest to last, LAST: from the last to the oldest 
+		 * @return TRAN_SEQ first tran_seq
+		 */
+        TRAN_SEQ begin(ORDER o);
+        //
+        //in spacial order
+		/**
+		 * @brief list all tran_seq with differenct DIRECTION(BEFORE or AFTER) of the seq
+		 * 
+		 * @param seq special seq in the object
+		 * @param d BEFORE | AFTER 
+		 * @param o FIRST | LAST
+		 * @return TRAN_SEQ first tran_seq
+		 */
+		TRAN_SEQ begin(TRAN_SEQ seq,DIRECTION d,ORDER o);
+
+		/**
+		 * @brief get one tran_seq according to the lastest begin()
+		 * 
+		 * @return TRAN_SEQ current tran_seq. If return NULL_SEQ means 
+		 */
+		TRAN_SEQ next();
+                 
+		/**
+		 * @brief check wether seq is in the object
+		 * 
+		 * @param seq 
+		 * @return int If seq is NOT in the vec return -1; else return the index of it
+		 */
 		int isIn(TRAN_SEQ seq);
 		
 		~tran_vec();

@@ -1,4 +1,5 @@
 #include <math.h>
+#include <iostream>
 #include <string.h>
 #include "../include/core_type.h"
 #include <time.h>
@@ -8,6 +9,7 @@ float Satoshi2double(BTC_VOL vol){
     return (float)vol/(float)SATOSHI;
 }
 float LongSatoshi2float(LONG_BTC_VOL vol){
+    //cout<<vol<<endl;
     return (float)vol/(float)SATOSHI;
 
 }

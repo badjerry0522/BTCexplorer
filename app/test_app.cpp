@@ -7,7 +7,7 @@
 #include "../include/be.h"
 #include "../include/tran_vec.h"
 #include "../include/statistics.h"
-
+#include "../include/trans_in_mem.h"
 
 class tran_vec;
 class statistics;
@@ -76,10 +76,48 @@ void test_statistics(){
 
     delete s1;
 }
+void test_TIM(TRAN_SEQ seq,address_query *addrq,trans_in_mem *tim){
+    struct transaction_binary *tp=(struct transaction_binary *)malloc(sizeof(struct transaction_binary));
+    tim->get_tran_binary(seq,tp);
+    //cout<<"After get_tran_binary"<<endl;
+    
+    addrq->output_tran(cout,tp);
+
+    free(tp);
+}
+void test_addr2tran(char *btc_addr,address_query *addrq,trans_in_mem *tim,addr2tran *a2t){
+    ERROR_CODE err;
+    ADDR_SEQ addr=addrq->get_addr_seq(btc_addr,&err);
+    cout<<addr<<endl;
+    tran_vec *tran;
+    tran=a2t->get_tran_set(addr,&err);
+    cout<<tran->size()<<endl;
+    TRAN_SEQ t;
+    struct transaction_binary *tp=(struct transaction_binary *)malloc(sizeof(struct transaction_binary));
+    
+    t=tran->begin();
+    while(t!=NULL_SEQ){
+        tim->get_tran_binary(t,tp);
+    //cout<<"After get_tran_binary"<<endl;
+    
+        addrq->output_tran(cout,tp);
+        t=tran->next();
+    }
+    free(tp);
+    delete tran;
+}
 ERROR_CODE test_app(int app_argn,void **argv){
     //test_tran_vec();
     //test_CLOCK();
-    test_statistics();
+    //test_statistics();
+    BE_env *env=(BE_env *)argv[0];
+    char *btc_addr=(char *)argv[1];
+    address_query *addrq=env->addrq;
+    trans_in_mem *tim=env->tim;
+    addr2tran *a2t=env->a2t;
+    //cout<<seq<<endl;
+    //test_TIM(seq,addrq,tim);
+    test_addr2tran(btc_addr,addrq,tim,a2t);
     return NO_ERROR;
 }
 

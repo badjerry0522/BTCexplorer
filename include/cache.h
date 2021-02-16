@@ -31,7 +31,10 @@ int ispowerof2(uint64_t d);
 //if d is the power of 2  return = log_2(d)
 //                 else   return =0 err=INVALID_ARG
 int log2(uint64_t d,ERROR_CODE *err);
-
+/**
+ * @brief Cache
+ * 
+ */
 class cache{
     private:
         struct set_control *sc;
@@ -75,24 +78,50 @@ class cache{
         void read_from_disk(uint64_t index,FILE *fout);
         void preparation(uint64_t index);
     public:
+    /**
+     * @brief Construct a new cache object
+     * 
+     */
         cache();
-        //filename: the data filename
-        //logC: log_2(C) Memory size in bytes eg. logC=30 means 2^30=1GB
-        //logE: log_2(E) element size in bytes eg.  logE=4 means 2^4=16B
-        //max_index: the maxium of index
-        //Speacial
-        //if logC==0 means No cache
-        //if 2^logC>2^logE*max_index load all file in the memory
+        /**
+         * @brief init a cache
+         * if logC==0 means None mode
+         * if 2^logC>2^logE*max_index load all file in the memory
+         * else is Normal mode
+         * @param filename the file in the disk
+         * @param logC     log2(C) Memory size in bytes eg. logC=30 means 2^30=1GB
+         * @param logE     log2(E) element size in bytes eg.  logE=4 means 2^4=16B
+         * @param _max_index the maxium of index
+         * @return ERROR_CODE 
+         */
         ERROR_CODE init(char *filename,int logC,int logE,uint64_t _max_index);
 
-        //Load the index=th element to p
+        /**
+         * @brief   Load the index-th element to p
+         * 
+         * @param index the index of element
+         * @param p     read the content of one element from file
+         * @return ERROR_CODE 
+         */
         ERROR_CODE load(uint64_t index, unsigned char *p);
-        //Load num elements to p
-        //ERROR_CODE load(uint64_t index, int num,uint8_t *p);
 
-        //Write the p to the index-th element
+        /**
+         * @brief Write the p to the index-th element
+         * 
+         * @param index the index of element
+         * @param p     write the contenet of the element to file  
+         * @return ERROR_CODE 
+         */
         ERROR_CODE store(uint64_t index,unsigned char *p);
-        //consecutive elements stored in p, start from index, read them from disk
+        
+        /**
+         * @brief read consecutive len elements from index from file
+         * 
+         * @param index the begin index
+         * @param len   the number of element
+         * @param p     read the content of len elements from file
+         * @return ERROR_CODE 
+         */
         ERROR_CODE multiload(uint64_t index,int len,unsigned char *p);
 
 

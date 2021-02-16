@@ -37,9 +37,10 @@ int main(int argn,char **argv){
 	app_manager *app=new app_manager();
 	struct BE_env *be_env=(struct BE_env *)malloc(sizeof(struct BE_env));
 	//init be_env
-	//be_env->tim=new trans_in_mem((char *)config->find("TIM_Dir"));
+	be_env->tim=new trans_in_mem((char *)config->find("TIM_Dir"));
 	be_env->accountq=new account_query((char *)config->find("Account_Dir"));
 	be_env->addrq=new address_query((char *)config->find("Address_Dir"));
+	be_env->a2t=new addr2tran((char *)config->find("Addr2tran_Dir"));
 	be_env->app=app;
 	be_env->app_work_dir=(char *)config->find("AppWork_Dir");
 	be_env->error_fname=(char *)config->find("Error_File");

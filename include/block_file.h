@@ -20,7 +20,7 @@ else
 BTC_VOL input_vol[input_num]
 BTC_VOL output_vol[output_num]
 */
-void parse_tran(char *buf,CLOCK *block_time,struct tran_info *tp, 
-              ADDR_SEQ *addr, uint32_t *vol,ERROR_CODE *err);
+ERROR_CODE parse_tran(char *buf,CLOCK *block_time,struct tran_info *tp, 
+              ADDR_SEQ *addr, uint64_t *vol);
 
 #endif

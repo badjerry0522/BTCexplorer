@@ -3,6 +3,8 @@
 #include<unistd.h>
 #include<cstring>
 #include<cmath>
+#include <vector>
+#include <algorithm>
 #include<unordered_set>
 #include"../include/block_file.h"
 #include"../include/build_TIM.h"
@@ -10,159 +12,295 @@
 int tran_data_size(struct tran_info *tp){
 	return (sizeof(ADDR_SEQ)+sizeof(BTC_VOL)<<tp->long_btc_vol)*(tp->input_num+tp->output_num);
 }
-ERROR_CODE read_TIM_META(char *des_TIM_META,uint64_t *max_addr,uint64_t *num_trans,uint64_t *av_size){
-	ifstream fin_TIM_META(des_TIM_META,ios::in);
+bool cmp_tran_seq(TRAN_SEQ val,struct block_info &b2){
+	return val<b2.first_tran_seq;
+}
+vector<struct block_info> *read_block(char *fname){
+	FILE *fhandle;
+	fhandle=fopen(fname,"rb");
+//	cout<<fname<<endl;
+	if(fhandle==NULL) return NULL;
+	vector<struct block_info> *pb=new vector<struct block_info>;
+	struct block_info b;
+	int bnum=0;
+	while(!feof(fhandle)){
+		int readnum=fread(&b,sizeof(struct block_info),1,fhandle);
+		if(readnum==1)	pb->push_back(b);
+//		bnum++;
+//		if(bnum%10000==0) cout<<bnum<<endl;
+	}
+	fclose(fhandle);
+	return pb;
+}
+
+ERROR_CODE trans_in_mem::read_TIM_META(){
+	ifstream fin_TIM_META(TIM_meta_fname,ios::in);
+	cout<<TIM_meta_fname<<endl;
 	if(!fin_TIM_META.is_open()) return CANNOT_OPEN_FILE;
-	int version,block_num;
-	fin_TIM_META>>version>>block_num>>*num_trans>>*max_addr>>*av_size;
+	int version;
+	fin_TIM_META>>version>>block_num>>num_trans>>max_addr>>av_size;
 	fin_TIM_META.close();
 	return NO_ERROR;
 }
-ERROR_CODE trans_in_mem::generate_empty_files(char *dir_name,uint64_t max_addr){
-	char temp[200];
-	strcpy(temp,dir_name);
-	strcat(temp,"/addr_show_times.txt");
-	FILE *f1=fopen(temp,"wb+");
-	if(f1==NULL) return ERROR_FILE;
-	creat_addr_show_times(f1,(uint64_t)max_addr*4);
-	fclose(f1);
-	return NO_ERROR;
-}
-//return CANNOT_OPEN_FILE when file not exist
-ERROR_CODE trans_in_mem::check_is_addr_show_times_exist(char *dir_name){
-	char temp[200];
-	strcpy(temp,dir_name);
-	strcat(temp,"/addr_show_times.txt");
-	FILE *f1=fopen(temp,"rb");
-	if(f1==NULL){
-		cout<<"NULL"<<endl;
-		return CANNOT_OPEN_FILE;
-	}
-	fclose(f1);
-	return NO_ERROR;
-}
-ERROR_CODE generate_av(char *dir_name,char *output_dir_name){
-	ERROR_CODE er=NO_ERROR;
-    float time_use=0;
-    struct timeval start,end;
-    gettimeofday(&start,NULL);
-    build_TIM(dir_name,0,"",&er);
-    gettimeofday(&end,NULL);
-    time_use=(end.tv_sec-start.tv_sec)*1000000+(end.tv_usec-start.tv_usec);
-    cout<<"time_use="<<time_use*1000<<"s"<<endl;
-	return er;
-}
-
-ERROR_CODE trans_in_mem::init_addr_show_times(char *dir_name){
+trans_in_mem::trans_in_mem(char *_dir_name){
 	ERROR_CODE err;
-	//read from TIM_META
-	strcpy(des_TIM_meta,dir_name);strcat(des_TIM_meta,"/TIM_meta.txt");
-	err=read_TIM_META(des_TIM_meta,&max_addr,&num_trans,&av_size);
-	cout<<"max_addr="<<max_addr<<endl;
-
-
-	//err=generate_empty_files(dir_name,max_addr);//creat empty files
-	//cout<<"err of generate_empty_files="<<err<<endl;
-
-
-	this->dir_name=dir_name;
-	strcpy(des_av,dir_name),strcpy(des_TIM_meta,dir_name),
-	strcpy(des_trans,dir_name),strcpy(des_addr_show_times,dir_name);//strcpy(des_addr_is_count,dir_name);
-	strcat(des_av,"/av.txt"),strcat (des_TIM_meta,"/TIM_meta.txt"),strcat(des_trans,"/trans.txt"),
-	strcat(des_addr_show_times,"/addr_show_times.txt");//strcat(des_addr_is_count,"/addr_is_count.txt");
+	strcpy(dir_name,_dir_name);
 	
-	cout<<"des_trans="<<des_trans<<endl;
-	cout<<"length of des_trans="<<strlen(des_trans)<<endl;
-	cout<<"des_av="<<des_av<<endl;
-//getchar();
+	strcpy(av_fname,dir_name);
+	strcat(av_fname,"av.dat");
 
+	strcpy(trans_fname,dir_name);
+	strcat(trans_fname,"trans.dat");
+	
+	strcpy(block_fname,dir_name);
+	strcat(block_fname,"block.dat");
 
-	//init cache of trans
-	err=ca_trans.init(des_trans,31,4,num_trans);
-	cout<<"err of init ca_trans="<<err<<endl;
-	if(err==ERROR_FILE) return ERROR_FILE;
+	strcpy(TIM_meta_fname,dir_name);
+	strcat(TIM_meta_fname,"TIM_meta.txt");
 
-	err=ca_av.init(des_av,31,2,av_size/4);
-	cout<<"err of init ca_av="<<err<<endl;
-	if(err==ERROR_FILE) return ERROR_FILE;
+	read_TIM_META();
+	cout<<"Blocks\t Trans\t Addrs"<<endl;
+	cout<<max_block_seq()<<"\t"<<max_tran_seq()<<"\t"<<max_addr_seq()<<endl;
+	
+	block=read_block(block_fname);
+	cout<<"Read "<<block->size()<<" Blocks"<<endl;
 
-	//err=ca_addr_is_count.init(des_addr_is_count,31,2,max_addr);
-	//cout<<"err of init ca_addr_is_count="<<err<<endl;
+	trans_cache=new cache();
+	//cout<<trans_fname<<endl;
+	trans_cache->init(trans_fname,30,log2(sizeof(struct tran_info)),(uint64_t)max_tran_seq());
 
-	err=ca_addr_show_times.init(des_addr_show_times,32,2,max_addr);
-	cout<<"err of init ca_show_times="<<err<<endl;
-	if(err==ERROR_FILE) return ERROR_FILE;
-
-	cout<<"cache init complete"<<endl;
-	cout<<endl<<endl;
-	//read av to cache
-//getchar();
-	for(int i=0;i<num_trans;i++){
-		//cout<<"num_trans="<<num_trans<<endl;
-		unordered_set <uint32_t> ust;
-		if(i==num_trans/10) cout<<"10% complete"<<endl;
-		if(i==num_trans/5) cout<<"20% complete"<<endl;
-		if(i==(int)num_trans/2) cout<<"50% complete"<<endl;
-		if(i==(int)(num_trans*0.75)) cout<<"75%complete"<<endl;
-		if(i>=(int)(num_trans*0.99)) cout<<"i="<<i<<endl;
-		//cout<<"i="<<i<<endl;
-		struct tran_info ti;
-		err=ca_trans.load(i,(unsigned char *)&ti);
-		if(err!=NO_ERROR) return err;
-		int num_addr_in_trans=ti.input_num+ti.output_num;
-		//cout<<"i="<<i<<"  num_addr_in_trans="<<num_addr_in_trans<<"  ti.index="<<ti.index<<"  "<<"ti.input_num="<<ti.input_num<<"  ti.output_num="<<ti.output_num<<endl;
-		for(int j=0;j<num_addr_in_trans;j++){
-			//cout<<"j="<<j<<"   ";
-			uint32_t temp[2];
-			temp[0]=0;temp[1]=0;
-			//read from av
-			if(ti.long_btc_vol==1){
-				err=ca_av.load(ti.index+j*2,(unsigned char *)&temp[0]);
-				if(err!=NO_ERROR) return err;
-
-				err=ca_av.load(ti.index+j*2+1,(unsigned char *)&temp[1]);
-				if(err!=NO_ERROR) return err;
-				//cout<<"temp[0]="<<temp[0]<<" temp[1]="<<temp[1]<<endl;
-			}
-			else{
-				err=ca_av.load(ti.index+j,(unsigned char *)&temp[1]);	
-				if(err!=NO_ERROR) return err;
-			}
-			cout<<"temp[1]="<<temp[1]<<endl;
-			//cout<<"read from av complete"<<endl;
-			//write to times
-			uint32_t old=0;
-			ca_addr_show_times.load(temp[1],(unsigned char *)&old);
-			if(err!=NO_ERROR) return err;
-			
-			//cout<<"load complete"<<endl;
-			if(ust.find(temp[1])==ust.end()){
-				old++;
-				ust.insert(temp[1]);
-			}
-			//else cout<<"already exist"<<endl;
-			//cout<<"old="<<old<<endl;
-			err=ca_addr_show_times.store(temp[1],(unsigned char *)&old);
-			cout<<"err of store ="<<err<<endl;
-			if(err!=NO_ERROR) return err;
-			cout<<"store end"<<endl;
-		}
-		//cout<<"ti.index="<<temp<<endl;
-	}
-}
-trans_in_mem::trans_in_mem(char dir_name[200]){
-	ERROR_CODE err;
-	err=init_addr_show_times(dir_name);//addr_show_times dont exist
+	//cout<<"Create av_cache"<<endl;
+	av_cache=new cache();
+	err=av_cache->init(av_fname,31,log2(sizeof(uint32_t)),av_size);
+	if(err!=NO_ERROR) cout<<"av_cache init error "<<err<<endl;
+	//err=init_addr_show_times(dir_name);//addr_show_times dont exist
 	//
 }
-
-int trans_in_mem::tran_num(ADDR_SEQ seq,ERROR_CODE *err){
-
-
-	
-
-	
-	
-
-	
+ADDR_SEQ trans_in_mem::max_addr_seq(){
+	return max_addr;
 }
+TRAN_SEQ trans_in_mem::max_tran_seq(){
+	return num_trans;
+}
+BLOCK_SEQ trans_in_mem::max_block_seq(){
+	return block_num;
+}
+
+CLOCK trans_in_mem::find_block_time(TRAN_SEQ seq,ERROR_CODE *err){
+	vector<struct block_info>::iterator iter;
+	if(seq>=num_trans) return *err=INVALID_ADDR_SEQ;
+	iter=upper_bound(block->begin(),block->end(),seq,cmp_tran_seq);
+	*err=NO_ERROR;
+	if(iter!=block->end()){
+		iter--;
+		return iter->block_time;
+	}
+	struct block_info last_b=block->at(block->size()-1);
+	return last_b.block_time;
+}
+int trans_in_mem::get_input_num(TRAN_SEQ seq,ERROR_CODE *err){
+	if(seq>=num_trans) return INVALID_TRAN_SEQ;
+	struct tran_info t;
+
+	ADDR_SEQ temp_addr;
+	*err=trans_cache->load(seq,(unsigned char *)&t);
+	return t.input_num;
+}
+int trans_in_mem::get_output_num(TRAN_SEQ seq,ERROR_CODE *err){
+	if(seq>=num_trans) return INVALID_TRAN_SEQ;
+	struct tran_info t;
+
+	ADDR_SEQ temp_addr;
+	*err=trans_cache->load(seq,(unsigned char *)&t);
+	return t.output_num;
+}
+int trans_in_mem::get_input_addr(TRAN_SEQ seq,ADDR_SEQ *addr,ERROR_CODE *err){
+	if(seq>=num_trans) return INVALID_TRAN_SEQ;
+	struct tran_info t;
+
+	ADDR_SEQ temp_addr;
+	*err=trans_cache->load(seq,(unsigned char *)&t);
+	uint64_t index=t.index;
+	for(int i=0;i<t.input_num;i++){
+		*err=av_cache->load(index,(unsigned char *)&temp_addr);
+		//cout<<"From Cache"<<addr<<endl;
+		addr[i]=temp_addr;
+		index++;
+	}
+	*err=NO_ERROR;
+	return t.input_num;
+}
+int trans_in_mem::get_output_addr(TRAN_SEQ seq,ADDR_SEQ *addr,ERROR_CODE *err){
+	if(seq>=num_trans) return INVALID_TRAN_SEQ;
+	struct tran_info t;
+
+	ADDR_SEQ temp_addr;
+	*err=trans_cache->load(seq,(unsigned char *)&t);
+	uint64_t index=t.index+t.input_num;
+	for(int i=0;i<t.output_num;i++){
+		*err=av_cache->load(index,(unsigned char *)&temp_addr);
+		//cout<<"From Cache"<<addr<<endl;
+		addr[i]=temp_addr;
+		index++;
+	}
+	*err=NO_ERROR;
+	return t.output_num;
+}
+int trans_in_mem::get_all_addr(TRAN_SEQ seq,ADDR_SEQ *addr,ERROR_CODE *err){
+	if(seq>=num_trans) return INVALID_TRAN_SEQ;
+	struct tran_info t;
+
+	ADDR_SEQ temp_addr;
+	*err=trans_cache->load(seq,(unsigned char *)&t);
+	uint64_t index=t.index;
+	int sum=t.input_num+t.output_num;
+	for(int i=0;i<sum;i++){
+		*err=av_cache->load(index,(unsigned char *)&temp_addr);
+		//cout<<"From Cache"<<addr<<endl;
+		addr[i]=temp_addr;
+		index++;
+	}
+	*err=NO_ERROR;
+	return sum;
+}
+ERROR_CODE trans_in_mem::get_tran_binary(TRAN_SEQ seq,struct transaction_binary *ti){
+	if(seq>=num_trans) return INVALID_TRAN_SEQ;
+	struct tran_info t;
+	ERROR_CODE err;
+//	cout<<"get_tran_binary"<<endl;
+	err=trans_cache->load(seq,(unsigned char *)&t);
+	//printf("From Cache:%d %d %d\n",t.input_num,t.output_num,t.long_btc_vol);
+
+	if(err!=NO_ERROR) return err;
+	ti->valid_inputs=t.input_num;
+	ti->valid_outputs=t.output_num;
+	ti->block_time=find_block_time(seq,&err);
+	//cout<<ti->block_time<<endl;
+
+	
+	ADDR_SEQ addr;
+	uint64_t index=t.index;
+
+	for(int i=0;i<t.input_num;i++){
+		err=av_cache->load(index,(unsigned char *)&addr);
+		//cout<<"From Cache"<<addr<<endl;
+		ti->inputs[i].addr=addr;
+		index++;
+	}
+	for(int i=0;i<t.output_num;i++){
+		err=av_cache->load(index,(unsigned char *)&addr);
+		ti->outputs[i].addr=addr;
+		index++;
+	}
+
+//	getchar();
+	BTC_VOL vol_short;
+	LONG_BTC_VOL vol;
+	if(t.long_btc_vol==0){
+		for(int i=0;i<t.input_num;i++){	
+			err=av_cache->load(index,(unsigned char *)&vol_short);
+			ti->inputs[i].bitcoin=(LONG_BTC_VOL)vol_short;
+			index++;
+		}
+		for(int i=0;i<t.output_num;i++){	
+			err=av_cache->load(index,(unsigned char *)&vol_short);
+			ti->outputs[i].bitcoin=(LONG_BTC_VOL)vol_short;
+			index++;
+		}
+	}
+	else{
+		for(int i=0;i<t.input_num;i++){
+			BTC_VOL vol_low,vol_high;
+			err=av_cache->load(index,(unsigned char *)&vol_low);
+			index++;
+			err=av_cache->load(index,(unsigned char *)&vol_high);
+			index++;
+			vol=(LONG_BTC_VOL)vol_high;
+			vol=(vol<<32)+(LONG_BTC_VOL)vol_low;
+	//		cout<<vol_high<<" "<<vol_low<<" "<<vol<<endl;
+			ti->inputs[i].bitcoin=vol;
+		}
+		for(int i=0;i<t.output_num;i++){	
+			BTC_VOL vol_low,vol_high;
+			err=av_cache->load(index,(unsigned char *)&vol_low);
+			index++;
+			err=av_cache->load(index,(unsigned char *)&vol_high);
+			index++;
+			vol=(LONG_BTC_VOL)vol_high;
+			vol=(vol<<32)+(LONG_BTC_VOL)vol_low;
+	//		cout<<vol_high<<" "<<vol_low<<" "<<vol<<endl;
+			ti->outputs[i].bitcoin=vol;
+		}
+	}
+	return NO_ERROR;
+}
+
+CLOCK trans_in_mem::first_block_time(){
+	struct block_info b=block->at(0);
+	return b.block_time;
+}
+CLOCK trans_in_mem::last_block_time(){
+	struct block_info b=block->at(block->size()-1);
+	return b.block_time;
+}
+
+
+addr2tran::addr2tran(char *dname){
+	char fname[MAX_FNAME_SIZE];
+	strcpy(fname,dname);
+	strcat(fname,"a2t_meta.txt");
+	ifstream fin_meta(fname,ios::in);
+	int version;
+	fin_meta>>version>>max_addr>>max_a2t;
+	fin_meta.close();
+	strcpy(fname,dname);
+	strcat(fname,"addr2tran.dat");
+	a2t_cache=new cache();
+	a2t_cache->init(fname,30,log2(sizeof(TRAN_SEQ)),max_a2t);
+
+	strcpy(fname,dname);
+	strcat(fname,"addr2tran_index.dat");
+	index_cache=new cache();
+	index_cache->init(fname,30,log2(sizeof(uint64_t)),max_addr);
+
+}
+int addr2tran::tran_num(ADDR_SEQ seq, ERROR_CODE *err){
+	if(seq>max_addr){
+		*err=INVALID_ADDR_SEQ;
+		return -1;
+	}
+	uint64_t index0,index1;
+	if(seq==0){
+		index0=0;
+	}
+	else{
+		*err=index_cache->load(seq-1,(unsigned char *)&index0);
+	}
+	*err=index_cache->load(seq,(unsigned char *)&index1);
+	*err=NO_ERROR;
+	return index1-index0;
+}
+
+tran_vec* addr2tran::get_tran_set(ADDR_SEQ seq,ERROR_CODE *err){
+	if(seq>max_addr){
+		*err=INVALID_ADDR_SEQ;
+		return NULL;
+	}
+	uint64_t index0,index1;
+	if(seq==0){
+		index0=0;
+	}
+	else{
+		*err=index_cache->load(seq-1,(unsigned char *)&index0);
+	}
+	*err=index_cache->load(seq,(unsigned char *)&index1);
+	tran_vec *tv=new tran_vec();
+	TRAN_SEQ tran;
+	for(;index0<index1;index0++){
+		*err=a2t_cache->load(index0,(unsigned char *)&tran);
+		tv->push_back(tran);
+	}
+	*err=NO_ERROR;
+	return tv;
+}
+

@@ -30,6 +30,7 @@ struct BE_env{
    account_query *accountq;
    trans_in_mem *tim;
    app_manager *app;
+   addr2tran *a2t;
    char *app_work_dir;
    char *status_fname;
    char *progress_fname;

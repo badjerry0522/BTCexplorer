@@ -247,17 +247,19 @@ ERROR_CODE search_addr_seq(ADDR_SEQ seq, char *destdname,char *btc_addr){
         
         fin.seekg(cur_pos,ios::beg);
         
-        char c;    
+        char c;
+        if(cur_pos!=0){
         fin.read(&c,1);
-        while(c!=0x0a){
-            readnum=fin.readsome(&c,1);
-            if(readnum==0) break;
-        }
-        
+            while(c!=0x0a){
+                readnum=fin.readsome(&c,1);
+                if(readnum==0) break;
+            }
+            
 
-        if(readnum==0){
-            cur_pos-=50*SIZE_PER_LINE;
-            continue;
+            if(readnum==0){
+                cur_pos-=50*SIZE_PER_LINE;
+                continue;
+            }
         }
         do{
             if(fin.eof()){

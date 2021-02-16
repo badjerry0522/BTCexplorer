@@ -228,6 +228,27 @@ ERROR_CODE address_query::get_btc_address(ADDR_SEQ seq,char *btc_addr){
 */
 }
 
+void address_query::output_tran(ostream &os,struct transaction_binary *tp){
+    char clock_str[20];
+    char addr_str[100];
+    ERROR_CODE err;
+    //cout<<"In output_tran()"<<endl;
+    CLOCK2string(tp->block_time,clock_str);
+    os<<clock_str<<endl;
+    for(int i=0;i<tp->valid_inputs;i++){
+        err=get_btc_address(tp->inputs[i].addr,addr_str);
+        float vol=LongSatoshi2float(tp->inputs[i].bitcoin);
+        os<<addr_str<<" "<<vol<<endl;
+    }
+    os<<"TO"<<endl;
+    for(int i=0;i<tp->valid_outputs;i++){
+        //cout<<"searching addr:"<<tp->outputs[i].addr<<endl;
+        err=get_btc_address(tp->outputs[i].addr,addr_str);
+        float vol=LongSatoshi2float(tp->outputs[i].bitcoin);
+        os<<addr_str<<" "<<vol<<endl;
+    }
+    os<<endl;
+}
 //fill info with config
 void address_query::get_address_info(ADDR_SEQ seq,struct address_info *ai,int config,ERROR_CODE *err){
     //address info file

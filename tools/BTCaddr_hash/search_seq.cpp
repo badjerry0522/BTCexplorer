@@ -67,17 +67,20 @@ int main(int argn, char **argv){
         fin.seekg(cur_pos,ios::beg);
         
         char c;    
-        fin.read(&c,1);
-        while(c!=0x0a){
-            readnum=fin.readsome(&c,1);
-            if(readnum==0) break;
-        }
-        
 
-        if(readnum==0){
-            cur_pos-=50*SIZE_PER_LINE;
-            continue;
+        if(cur_pos!=0){
+            fin.read(&c,1);
+            while(c!=0x0a){
+                readnum=fin.readsome(&c,1);
+                if(readnum==0) break;
+            }
+            if(readnum==0){
+                cur_pos-=50*SIZE_PER_LINE;
+                continue;
+            }
         }
+
+
         do{
             if(fin.eof()){
                 out_of_max_seq=1;

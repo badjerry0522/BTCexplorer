@@ -53,7 +53,7 @@ void init_set_control(struct set_control *sc,int set_num,int lines,int linesize,
     }
 }
 void cache::print_hit(unsigned char *p){
-    //cout<<"index_set="<<index_set<<" index_hit="<<index_hit<<" offset_line="<<offset_line<<endl;
+    //cout<<"index_set="<<index_set<<" index_hit="<<index_hit<<" offset_line="<<index_line<<endl;
     memcpy(p,sc[index_set].l[index_hit].p+index_line*Esize,Esize);
     //cout<<"memcpy complete"<<endl;
 }
@@ -106,7 +106,9 @@ void cache::write_to_cache(unsigned char *p){
 void cache::read_from_disk(uint64_t index,FILE *fin){
     uint64_t offset_line=((index>>log_line_size)<<log_line_size)*Esize;//the position of the start of the line in disk
     int seek_result=fseek(fin,offset_line,SEEK_SET);
+    //cout<<"Read file "<<offset_line<<" to set "<<index_set<<" line "<<index_hit<<endl;
     int fread_result=fread(sc[index_set].l[index_hit].p,1,LINE_SIZE,fin);//read in to cache
+    //cout<<"Read num="<<fread_result<<endl;
 }
 void cache::preparation(uint64_t index){
     index_set=(index>>log_line_size)&set_mask;//store in which set 
@@ -154,7 +156,7 @@ ERROR_CODE cache::init(char *filename,int logC,int _logE,uint64_t _max_index){
     if(ret != 0) return ERROR_FILE;
     //cout<<"stabuf.st_size="<<statbuf.st_size<<"  filesize="<<filesize<<endl;
     if(statbuf.st_size!=filesize) return ERROR_FILE;
-    this->fhandle=fopen(filename,"rb+");
+    this->fhandle=fopen(filename,"rb");
     if(fhandle==NULL){
         //cout<<"fhandle=NULL"<<endl;
         return ERROR_FILE;
@@ -213,13 +215,15 @@ ERROR_CODE cache::load(uint64_t index,unsigned char *p){
         return NO_ERROR;
     }
     else if(type==NONE){
+        cout<<"None:"<<offset<<endl;
         uint64_t seek_result=fseek(fhandle,offset,SEEK_SET);
         int fread_result=fread(p,Esize,1,fhandle);
-        if((seek_result==offset)&&(fread_result==Esize)) return NO_ERROR;
+        if(fread_result==1) return NO_ERROR;
         return ERROR_FILE;
     }
     else if(type==NORMAL){
         ERROR_CODE err;
+        //cout<<"cache::load type=normal"<<endl;
         /*
         index_set=(index>>log_line_size)&set_mask;
         tag=index&tag_mask;
@@ -241,6 +245,7 @@ ERROR_CODE cache::load(uint64_t index,unsigned char *p){
 
                 write_to_disk(index,fhandle);//write to disk
             }
+            //cout<<"Read index "<<index<<endl;
             read_from_disk(index,fhandle);
         }
         //else cout<<"HIT"<<endl;
