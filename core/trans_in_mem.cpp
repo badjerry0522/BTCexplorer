@@ -66,10 +66,10 @@ trans_in_mem::trans_in_mem(char *_dir_name){
 	cout<<"Read "<<block->size()<<" Blocks"<<endl;
 
 	trans_cache=new cache();
-	//cout<<trans_fname<<endl;
+	cout<<"Trans Cache:"<<trans_fname<<endl;
 	trans_cache->init(trans_fname,30,log2(sizeof(struct tran_info)),(uint64_t)max_tran_seq());
 
-	//cout<<"Create av_cache"<<endl;
+	cout<<"av_cache:"<<av_fname<<endl;
 	av_cache=new cache();
 	err=av_cache->init(av_fname,31,log2(sizeof(uint32_t)),av_size);
 	if(err!=NO_ERROR) cout<<"av_cache init error "<<err<<endl;
@@ -234,7 +234,16 @@ ERROR_CODE trans_in_mem::get_tran_binary(TRAN_SEQ seq,struct transaction_binary 
 	}
 	return NO_ERROR;
 }
+void trans_in_mem::profile(){
+	uint64_t access_num;
+	double hit_ratio;
+	hit_ratio=av_cache->profile(&access_num);
+	show_cache_profile("av cache",access_num,hit_ratio);
+	hit_ratio=trans_cache->profile(&access_num);
+	show_cache_profile("trans cache",access_num,hit_ratio);
+	
 
+}
 CLOCK trans_in_mem::first_block_time(){
 	struct block_info b=block->at(0);
 	return b.block_time;
@@ -251,18 +260,25 @@ addr2tran::addr2tran(char *dname){
 	strcat(fname,"a2t_meta.txt");
 	ifstream fin_meta(fname,ios::in);
 	int version;
+	ERROR_CODE ret;
 	fin_meta>>version>>max_addr>>max_a2t;
 	fin_meta.close();
 	strcpy(fname,dname);
 	strcat(fname,"addr2tran.dat");
+	cout<<"a2t cache:\t"<<fname<<endl;
 	a2t_cache=new cache();
-	a2t_cache->init(fname,30,log2(sizeof(TRAN_SEQ)),max_a2t);
-
+	ret=a2t_cache->init(fname,30,log2(sizeof(TRAN_SEQ)),max_a2t);
+	if(ret!=NO_ERROR){
+		cout<<"Error for init cache"<<endl;
+	}
 	strcpy(fname,dname);
 	strcat(fname,"addr2tran_index.dat");
+	cout<<"index cache:\t"<<fname<<endl;
 	index_cache=new cache();
-	index_cache->init(fname,30,log2(sizeof(uint64_t)),max_addr);
-
+	ret=index_cache->init(fname,30,log2(sizeof(uint64_t)),max_addr);
+	if(ret!=NO_ERROR){
+		cout<<"Error for init cache"<<endl;
+	}
 }
 int addr2tran::tran_num(ADDR_SEQ seq, ERROR_CODE *err){
 	if(seq>max_addr){
@@ -282,6 +298,7 @@ int addr2tran::tran_num(ADDR_SEQ seq, ERROR_CODE *err){
 }
 
 tran_vec* addr2tran::get_tran_set(ADDR_SEQ seq,ERROR_CODE *err){
+	//cout<<"get_tran_set seq="<<seq<<" max_addr="<<max_addr<<endl;
 	if(seq>max_addr){
 		*err=INVALID_ADDR_SEQ;
 		return NULL;
@@ -291,9 +308,15 @@ tran_vec* addr2tran::get_tran_set(ADDR_SEQ seq,ERROR_CODE *err){
 		index0=0;
 	}
 	else{
+		//cout<<"get_tran_set load index0 seq="<<seq<<endl;
 		*err=index_cache->load(seq-1,(unsigned char *)&index0);
+		if(*err!=NO_ERROR){
+			return NULL;
+		}
 	}
 	*err=index_cache->load(seq,(unsigned char *)&index1);
+	if(*err!=NO_ERROR) return NULL;
+	//cout<<"get_tran_set index0="<<index0<<" index1="<<index1<<endl;
 	tran_vec *tv=new tran_vec();
 	TRAN_SEQ tran;
 	for(;index0<index1;index0++){
@@ -302,5 +325,15 @@ tran_vec* addr2tran::get_tran_set(ADDR_SEQ seq,ERROR_CODE *err){
 	}
 	*err=NO_ERROR;
 	return tv;
+}
+
+void addr2tran::profile(){
+	uint64_t access_num;
+	double hit_ratio;
+	hit_ratio=index_cache->profile(&access_num);
+	show_cache_profile("index cache",access_num,hit_ratio);
+	hit_ratio=a2t_cache->profile(&access_num);
+	show_cache_profile("a2t cache",access_num,hit_ratio);
+	
 }
 

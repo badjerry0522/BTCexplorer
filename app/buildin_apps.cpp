@@ -10,6 +10,7 @@ ERROR_CODE BEbuildin_bye(int argn,void **argv){
 }
 struct app_record bye_record={"bye","Exit BE",BEbuildin_bye};
 
+
 ERROR_CODE BEbuildin_help(int argn,void **argv){
 	struct BE_env *ep=(struct BE_env *)argv[0];
 	app_manager *app_m=ep->app;
@@ -30,3 +31,15 @@ ERROR_CODE BEbuildin_help(int argn,void **argv){
 	return NO_ERROR;
 }
 struct app_record help_record={"help","Show all cmd in BE",BEbuildin_help};
+
+
+ERROR_CODE BEbuildin_profile(int argn,void **argv){
+	BE_env *env=(BE_env *)argv[0];
+	addr2tran *a2t=env->a2t;
+	trans_in_mem *tim=env->tim;
+
+	a2t->profile();
+	tim->profile();
+	return NO_ERROR;	
+}
+struct app_record profile_record={"profile","profile of system",BEbuildin_profile};

@@ -35,48 +35,71 @@ int log2(uint64_t d,ERROR_CODE *err);
  * @brief Cache
  * 
  */
+void show_cache_profile(char *name,uint64_t access_num,double hit_ratio);
 class cache{
     private:
         struct set_control *sc;
         unsigned char *d;
-        uint64_t Csize;     //size of full cache
-        int Esize;      //size of element
-        int logE;       
-        uint64_t set_mask;
-        uint64_t tag_mask;
-        int set_num;
-        int log_set_num;
-        uint64_t log_line_size;
-
-        uint64_t max_index;
-        char filename[200];
-        FILE* fhandle;
         CACHE_TYPE type;
 
+        //size of full cache
+        uint64_t Csize;     
+
+        //size of element
+        int Esize;      
+        int logE;   //=log(Esize) 
+
+        //element in one line
+        uint64_t log_line_size;
+        uint64_t line_mask;
+        int Enum_line;
+
+        //number of sets
+        int log_set_num;
+        int set_num;
+
+        uint64_t set_mask;
+        uint64_t tag_mask;
+        
+        uint64_t max_index;
+
+        char filename[200];
+        FILE* fhandle;
+
+        uint64_t hit_num,access_num;
+
+        /*
         uint64_t index_set;//set index when load or store is operating
         uint64_t tag;//tag of index when load or store is operating
         uint64_t index_line;//line index when load or store is operating
         int hit;//if hit,0,else -1
         int index_hit;//the line index of the hit line
         int least;//the line to be replaced
+        */
+        void show_paraments();
 
         void print_hit(unsigned char *p);
 
+        int remain_len(uint64_t _index);
         //copy multi elements to p, with the number of len
-        void print_multi_hit(unsigned char *p,int len);
-
+        //void print_multi_hit(unsigned char *p,int len);
+        void read_multiE(uint64_t _index_set,uint64_t hit_line,uint64_t _index_line,unsigned char *p,int len);
+        int check_is_hit(uint64_t _index_set,uint64_t _tag);
         //if hit, return the NO. of line in the set, else return -1
-        int check_is_hit();
-        int getleast();
+        //int check_is_hit();
+        //int getleast();
+        int getleast(int _index_set);
 
         //for hit_type: 0 for miss, 1 for hit   for dirty: 1 for not wirtten yet, 0 for written
-        void update_line(int hit_type,int dirty);
-        void write_to_disk(uint64_t index,FILE *fout);
-        void write_to_cache(unsigned char *p);
+        //void update_line(int hit_type,int dirty);
+        void update_line(uint64_t tag,uint64_t _index_set,uint64_t _index_hit,int hit_type,int dirty);
+        void write_to_disk(uint64_t index,uint64_t _index_set,uint64_t _index_hit,FILE *fout);
+        //void write_to_cache(uint64_t _index_set,uint64_t _index_hit,uint64_t _index_line,unsigned char *p);
 
         
-        void read_from_disk(uint64_t index,FILE *fout);
-        void preparation(uint64_t index);
+        void read_from_disk(uint64_t index,uint64_t _index_set,uint64_t _index_hit,FILE *fout);
+        //void preparation(uint64_t index);
+        ERROR_CODE mload_inline(uint64_t index,int len,unsigned char *p);
     public:
     /**
      * @brief Construct a new cache object
@@ -95,6 +118,7 @@ class cache{
          * @return ERROR_CODE 
          */
         ERROR_CODE init(char *filename,int logC,int logE,uint64_t _max_index);
+  
 
         /**
          * @brief   Load the index-th element to p
@@ -124,9 +148,9 @@ class cache{
          */
         ERROR_CODE multiload(uint64_t index,int len,unsigned char *p);
 
-
         //get the profile of cache
-        void profile(uint64_t *access_time, float miss_ratio);
+        double profile(uint64_t *_access_num);
+
         ~cache();
 };
 #endif

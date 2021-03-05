@@ -82,8 +82,6 @@ class trans_in_mem{
 		LONG_BTC_VOL get_input_bitcion(TRAN_SEQ seq, ERROR_CODE *err);
 		LONG_BTC_VOL get_output_bitcion(TRAN_SEQ seq, ERROR_CODE *err);
 		
-
-		
 		//Max seq of addr,tran and block
 		ADDR_SEQ max_addr_seq();
 		TRAN_SEQ max_tran_seq();
@@ -92,6 +90,8 @@ class trans_in_mem{
 		//CLOCK time of the first block and last block
 		CLOCK first_block_time();
 		CLOCK last_block_time();
+
+		void profile();
 };
 
 class addr2tran{
@@ -105,5 +105,6 @@ class addr2tran{
 		int tran_num(ADDR_SEQ seq, ERROR_CODE *err);
 		//Get the set of transaction with seq
 		tran_vec *get_tran_set(ADDR_SEQ seq,ERROR_CODE *err);
+		void profile();
 };
 #endif

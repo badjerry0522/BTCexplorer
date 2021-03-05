@@ -88,9 +88,13 @@ void test_TIM(TRAN_SEQ seq,address_query *addrq,trans_in_mem *tim){
 void test_addr2tran(char *btc_addr,address_query *addrq,trans_in_mem *tim,addr2tran *a2t){
     ERROR_CODE err;
     ADDR_SEQ addr=addrq->get_addr_seq(btc_addr,&err);
-    cout<<addr<<endl;
+    cout<<"addr2tran: addr="<<addr<<endl;
     tran_vec *tran;
     tran=a2t->get_tran_set(addr,&err);
+    if(err!=NO_ERROR){
+        cout<<"Error for get_tran_set():"<<error_string(err)<<endl;
+        return;
+    }
     cout<<tran->size()<<endl;
     TRAN_SEQ t;
     struct transaction_binary *tp=(struct transaction_binary *)malloc(sizeof(struct transaction_binary));

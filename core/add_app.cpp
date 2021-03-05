@@ -10,6 +10,7 @@ extern struct app_record account_of_addr_record;
 extern struct app_record test_record;
 extern struct app_record help_record;
 extern struct app_record bye_record;
+extern struct app_record profile_record;
 
 
 void add_app(app_manager *app){
@@ -22,4 +23,5 @@ void add_app(app_manager *app){
 	app->add_app(&analyse_tran_record);
 	app->add_app(&account_of_addr_record);
 	app->add_app(&test_record);
+	app->add_app(&profile_record);
 }
