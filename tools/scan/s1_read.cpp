@@ -39,69 +39,72 @@ int main(int argc, char *argv[])
 	//读入json文件tx_0.txt
 	ifstream f;
 	string line;
-	f.open(input_path);
+	
 	
 
 	//用户编号，从0开始
-	int user_number = 0;
 
 	//处理了多少条记录
-	int lin = 0;
-	map<int, set<int>> accMap;
-
-	while (getline(f, line))
-	{
-		lin++;
-		printf("这是第%d次读取地址-----", lin);
-		printf("\r\033[k");
-
-		stringstream input(line);
-		int addr, acc;
-		
-		
-		input >> addr >> acc;
-		
-		accMap[acc].insert(addr);
-	}
-
-	 cout<<endl << "the number of address: " << lin << endl;
-
 	
-	 ofstream out_file;
-	 out_file.open(output_path,ios::app);
-     
-
-
 	int t_user_size = 0;
-	
+	int l = 0;
+	int r = 300000000;
 
-	
-
-	for (auto i : accMap)
+	for (int i = 0; i < 3; i++)
 	{
-		int len = i.second.size();
-		printf("写入第%d个账户-----", t_user_size);
-		printf("\r\033[k");
-		if (i.first == -1)
+		int lin = 0;
+		map<int, set<int>> accMap;
+		f.open(input_path);
+		while (getline(f, line))
 		{
-			for (auto j : i.second)
-			{
-				out_file << j << " " << t_user_size << " " << 1 << endl;
-				t_user_size++;
-			}
+			lin++;
+			printf("这是第%d次读取地址-----", lin);
+			printf("\r\033[k");
+
+			stringstream input(line);
+			int addr, acc;
+
+
+			input >> addr >> acc;
+
+			if (acc >= l && acc < r)
+				accMap[acc].insert(addr);
 		}
-		else
+
+		/* cout<<endl << "the number of address: " << lin << endl;*/
+
+		ofstream out_file;
+		out_file.open(output_path, ios::app);
+
+
+		for (auto i : accMap)
 		{
-			for (auto j : i.second)
+			int len = i.second.size();
+			printf("写入第%d个账户-----", t_user_size);
+			printf("\r\033[k");
+			if (i.first == -1)
 			{
-				out_file << j << " " << t_user_size << " " << len << endl;
+				for (auto j : i.second)
+				{
+					out_file << j << " " << t_user_size << " " << 1 << endl;
+					t_user_size++;
+				}
 			}
+			else
+			{
+				for (auto j : i.second)
+				{
+					out_file << j << " " << t_user_size << " " << len << endl;
+				}
+			}
+			t_user_size++;
 		}
-		t_user_size++;
+		l = r;
+		r = r + 300000000;
+
+		out_file.close();
+		f.close();
 	}
-
-
-	out_file.close();
 	cout << "the number of account: " << t_user_size << endl;
 	
 	cout << "input file: " << input_path<< endl;
