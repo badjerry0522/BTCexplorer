@@ -128,34 +128,42 @@ double string_to_double(string str)
 int main(int argc, char *argv[])
 {
 
- string id_account_num,data2_account,data3_account,data2_address,data3_address,accnum,addnum;
+ string id_account_num,data2_account,data3_account,data2_address,data3_address,meta,outpath;
  int acc_num,add_num;
- if(argc > 5)
+ if(argc > 7)
  {
      id_account_num = argv[1];
      data2_account = argv[2];
      data3_account = argv[3];
      data2_address = argv[4];
      data3_address = argv[5];
-	 accnum = argv[6];
-	 addnum = argv[7];
-	 acc_num = atoi(accnum.c_str());
-	 add_num = atoi(addnum.c_str());
+	 meta = argv[6];
+	 outpath = argv[7];
+
  }
  else
  {
-  cout<<"error,the parameters are less than 5 "<<endl;
+  cout<<"error,the parameters are less than 7 "<<endl;
   return 0;
  }
 
  
 
+
+
+
+ ifstream f;
  string line;
+ f.open(meta);
+ while (getline(f, line))
+ {
+	 int time;
+	 stringstream input(line);
+	 input >> time >> acc_num >> add_num;
+ }
+ f.close();
 
- int addr,acc,total;
-
-
-
+ int addr, acc, total;
   
  ofstream csv_file;
 
@@ -166,7 +174,6 @@ int main(int argc, char *argv[])
  int* address2 = new int[add_num]; //地址活跃时长
 
  int index = 0;
- int num = 0;
  cout<<endl<<"acc2"<<endl;
  fstream file2, file3, file4, file5;
  fstream file(data2_account, ios::in | ios::binary);
@@ -178,9 +185,7 @@ int main(int argc, char *argv[])
 	 index++;
  }
  file.close();
- cout << num << endl;
  index=0;
- num = 0;
  file2.open(data3_account, ios::in | ios::binary);
  cout<<endl<<"acc3"<<endl;
  while(file2.read((char *)&temp2, sizeof(addr_info2)))
@@ -189,10 +194,8 @@ int main(int argc, char *argv[])
      index++;
  }
  file2.close();
- cout << num << endl;
  cout<<endl<<"account done"<<endl;
 
- num = 0;
  index = 0;
  cout<<endl<<endl<<"addr2"<<endl;
  file3.open(data2_address, ios::in | ios::binary);
@@ -202,9 +205,7 @@ int main(int argc, char *argv[])
   index++;
  }
  file3.close();
- cout << num << endl;
  index = 0;
- num = 0;
  file4.open(data3_address, ios::in | ios::binary);
  cout<<endl<<"addr3"<<endl;
  while(file4.read((char *)&temp2, sizeof(addr_info2)))
@@ -213,7 +214,6 @@ int main(int argc, char *argv[])
   index++;
  }
  file4.close();
- cout << num << endl;
  cout<<endl<<"address done"<<endl;
 
  file5.open(id_account_num);
@@ -229,9 +229,12 @@ int main(int argc, char *argv[])
 
   index = 0;
  
- csv_file.open("data4_account.csv");
- ofstream record("record.txt");
- fstream memoryfile("memory4_account.dat", ios::out | ios::binary);
+ string fname = outpath + "/data4_account.csv";
+ csv_file.open(fname.data());
+ fname = outpath + "/record.txt";
+ ofstream record(fname.data());
+ fname = outpath + "/memory4_account.dat";
+ fstream memoryfile(fname.data(), ios::out | ios::binary);
  //int addr,acc,total;
  //vector<string> temp,temp2,temp3,temp4;
 
@@ -244,9 +247,12 @@ int main(int argc, char *argv[])
 
     stringstream input(line);
     input>>addr>>acc>>total;
+	if (last < 3)
+		continue;
 
-    if(last==-1)
-    last = 0;	   
+    if(last==3)
+    last = 3;	   
+
 
 
     if(last==acc)

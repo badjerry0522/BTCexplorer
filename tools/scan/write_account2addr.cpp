@@ -1,3 +1,10 @@
+/*
+ * @Version: 1.0
+ * @Autor: Li dianchao
+ * @Date: 2021-03-22 17:31:47
+ * @LastEditors: Li dianchao
+ * @LastEditTime: 2021-03-28 20:29:24
+ */
 #include "stdio.h"
 #include "stdlib.h"
 #include "unistd.h"
@@ -15,7 +22,7 @@
 
 using namespace std;
 
-//交易地址方面的参数
+//���׵�ַ����Ĳ���
 
 
 
@@ -24,16 +31,16 @@ int main(int argc, char *argv[])
 	string addrtxt, addrlist,account2addr, acc_num;
 	int accnum;
 	if (argc > 3) {
-			 addrtxt = argv[1];  // 账户地址的聚类文件
+			 addrtxt = argv[1];  // �˻���ַ�ľ����ļ�
 			 account2addr = argv[2];
 			 addrlist = argv[3];
 	}
 	else{
-			cout << "error,the parameters are less than 2 " << endl;
+			cout << "error,the parameters are less than 3 " << endl;
 			return 0;
 	}
 
-	//标签地址文件
+	//��ǩ��ַ�ļ�
 
 
 	ifstream infile;
@@ -43,14 +50,14 @@ int main(int argc, char *argv[])
 	ofstream memoryfile2(addrlist.data(), ios::binary);
 	ofstream memoryfile3(account2addr.data(),ios::binary);
 
-	//读取地址id
+	//��ȡ��ַid
 	int k = 0;
 	int last = 0;
 	string s;
 	memoryfile3.write((char*)&last, sizeof(int));
 	while (getline(infile, s))
 	{
-		printf("这是第%d次读取账户-----", k);
+		printf("���ǵ�%d�ζ�ȡ�˻�-----", k);
 		printf("\r\033[k");
 	
 		istringstream input(s);
@@ -72,7 +79,7 @@ int main(int argc, char *argv[])
 	memoryfile3.close();
 
 
-	////测试
+	////����
 
 	//  int begin = 0;
 	//  int end = 0;

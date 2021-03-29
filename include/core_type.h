@@ -3,7 +3,7 @@
 #include <stdint.h>
 #define MAX_INPUT_NUM (1<<16)
 #define MAX_OUTPUT_NUM (1<<16)
-#define MAX_BTC_ADDRESS_LEN 42
+#define MAX_BTC_ADDRESS_LEN 64
 
 //Special addresses
 #define COINBASE_SEQ 0xFFFFFFFF //for coinbase   -1

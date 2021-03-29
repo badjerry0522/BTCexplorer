@@ -9,7 +9,7 @@
 #include <map>
 #include <vector>
 #include <time.h>
-
+//#include <mysql/mysql.h>
 using namespace std;
 
 string to_string(int n){
@@ -45,15 +45,42 @@ struct address_info2{
     }
 };
 
+struct address_info{
+    ADDR_SEQ seq;
+    char btc_address[MAX_BTC_ADDRESS_LEN];  		//seq---btc_address table
+    ADDR_TYPE type;      
+    struct address_info2 info2;	//seq--info2 table
+    ACCOUNT_SEQ account_seq; 	//seq--account table
+    int valid;
+};
  
 int main(int argc, char *argv[]) 
 {
-    if(argc > 3){
+    if(argc > 4){
         string path = argv[1];        //交易json文件目录
         string file_num = argv[2];    //交易json文件数量
-        string address_num = argv[3]; //地址数量
+        string meta = argv[3];        //meta文件
+        string outpath = argv[4];
         int filenum = atoi(file_num.c_str());
-        int addressnum = atoi(address_num.c_str());
+        int addressnum;
+		ifstream f;
+		string line;
+		f.open(meta);
+		while (getline(f, line))
+		{
+			int time, acc_num;
+			stringstream input(line);
+			input >> time >> acc_num >> addressnum;
+		}
+		f.close();
+
+
+
+        // string files[filenum];  //输入文件列表
+        // for(unsigned int n = 0; n < filenum; n++){
+        //     files[n] = path + "/tx_" + to_string(n) +".txt";
+        //     //cout<< files[n] <<endl;
+        // }
         
         //交易地址参数数组
         address_info2* addrs = new address_info2[addressnum];
@@ -71,12 +98,13 @@ int main(int argc, char *argv[])
         for(unsigned int n = 0; n < filenum; n++){
             ifstream infile; 
             string files = path + "/tx_" + to_string(n) +".txt";
-            infile.open(files.data()); 
-
-            if( !infile.is_open()){
-                cout<< files <<endl;
-            }
+            infile.open(files.data());   //将文件流对象与文件连接起来 
             
+            //若失败,则输出错误消息,并终止程序运行 
+            if( !infile.is_open()){
+                cout<<"error:"<< files <<endl;
+            }
+            cout<< "do:" << files << endl;
             string jsonstring;
             while(getline(infile, jsonstring))
             {
@@ -84,8 +112,9 @@ int main(int argc, char *argv[])
                 Json::Reader reader;
                 Json::Value root;
                 
+                //解析一个交易json
                 if (reader.parse(jsonstring, root)){
-
+                    //读取根节点信息
                     //string txhash = root["txhash"].asString();
                     //string blockhash = root["txhash"].asString();
                     //int fee = root["fee"].asInt();
@@ -96,61 +125,70 @@ int main(int argc, char *argv[])
                     //cout<<blocktime<<endl;
                     //cout<<fee<<endl;
 
-                    //地址类型::   0：非创币交易；1：NonStandardAddress；2：OpReturn；>=3：正常地址
+                    //地址类型:: 0：coinbase(创币交易)；1：NonStandardAddress；2：OpReturn；>=3：正常地址
                     if(blocktime >= pblocktime){
 
                         txnum += 1;
-                        cout<<"tx:"<<txnum<<endl;
+                        //cout<<"tx:"<<txnum<<endl;
 
                         if(blocktime != pblocktime){
                             pblocktime = blocktime;
                             blocknum++;
                         }
                 
-                        //inputs
+                        //交易输入
                         map<int, int64_t> inputs;
                         for(unsigned int i = 0; i < root["inputs"].size(); i++){
                             int address_num = root["inputs"][i]["address"].size();
                             
+                            //遍历一个交易输入
                             for(unsigned int j = 0; j< address_num; j++){
                                 int address_id = root["inputs"][i]["address"][j].asInt();
                                 
-                                if(address_id >= 3){
-                                    int64_t value = (int64_t)root["inputs"][i]["value"].asDouble();
+                                //正常地址
+                                if(address_id >= 0){
+                                    if(j == 0){
+                                        //交易金额
+                                        int64_t value = (int64_t)root["inputs"][i]["value"].asDouble();
 
-                                    map<int, int64_t>::iterator getin;
-                                    getin = inputs.find(address_id);
-
-                                    if(inputs.size() == 0 || getin == inputs.end()){
-                                        inputs.insert(map<int, int64_t>::value_type (address_id, value));
-                                    }
-                                    else{
-                                        getin->second = getin->second + value;
+                                        map<int, int64_t>::iterator getin;
+                                        getin = inputs.find(address_id);
+                                        //可能存在同一地址的多个输入
+                                        if(inputs.size() == 0 || getin == inputs.end()){
+                                            inputs.insert(map<int, int64_t>::value_type (address_id, value));
+                                        }
+                                        else{
+                                            getin->second = getin->second + value;
+                                        }
                                     }
                                 }
                             }
                         }
                     
                         //cout<<root["outputs"].size()<<endl;
-                        //outputs
+                        //交易输出
                         map<int, int64_t> outputs;
                         for(unsigned int i = 0; i < root["outputs"].size(); i++){
                             int address_num = root["outputs"][i]["address"].size();
                             
+                            //遍历一个交易输出
                             for(unsigned int j = 0; j< address_num; j++){
                                 int address_id = root["outputs"][i]["address"][j].asInt();
+                                //正常地址
+                                if(address_id >= 0){
+                                    if(j == 0){
+                                        //交易金额
+                                        int64_t value = (int64_t)root["outputs"][i]["value"].asDouble();
 
-                                if(address_id >= 3){
-                                    int64_t value = (int64_t)root["outputs"][i]["value"].asDouble();
-
-                                    map<int, int64_t>::iterator getout;
-                                    getout = outputs.find(address_id);
-
-                                    if(outputs.size() == 0 || getout == outputs.end()){
-                                        outputs.insert(map<int, int64_t>::value_type (address_id, value));
-                                    }
-                                    else{
-                                        getout->second = getout->second + value;
+                                        map<int, int64_t>::iterator getout;
+                                        getout = outputs.find(address_id);
+                                        //可能存在同一地址的多个输出
+                                        if(outputs.size() == 0 || getout == outputs.end()){
+                                            outputs.insert(map<int, int64_t>::value_type (address_id, value));
+                                        }
+                                        else{
+                                            getout->second = getout->second + value;
+                                        }
                                     }
                                 }
                             }
@@ -159,17 +197,18 @@ int main(int argc, char *argv[])
 
                         map<int, int64_t>::iterator iter;  
                         map<int, int64_t>::iterator find;  
-
+                        //输入
                         for(iter = inputs.begin(); iter != inputs.end(); iter++){
                             int address_id = iter->first;
                             int64_t value_in = iter->second;
                             //cout<<"i:"<<address_id<<"......."<<value_in<<endl;
                             
                             find = outputs.find(address_id);
-
+                            //地址只在输入中
                             if(outputs.size() == 0 || find == outputs.end()){
                                 addrs[address_id].balance -= value_in;
                                 
+                                //第一次出现
                                 if(addrs[address_id].first_clock == -10){
                                     addrs[address_id].first_clock = blocktime;
                                 }
@@ -187,8 +226,10 @@ int main(int argc, char *argv[])
                             }
                             else
                             {
+                                //地址既在输入中又在输出中
                                 addrs[address_id].balance = (addrs[address_id].balance - value_in + find->second);
                                 
+                                //第一次出现
                                 if(addrs[address_id].first_clock == -10){
                                     addrs[address_id].first_clock = blocktime;
                                 }
@@ -207,6 +248,7 @@ int main(int argc, char *argv[])
                             
                         }
                     
+                        //输出
                         for(iter = outputs.begin(); iter != outputs.end(); iter++){
                             int address_id = iter->first;
                             int64_t value_out = iter->second;
@@ -216,6 +258,7 @@ int main(int argc, char *argv[])
                             if(inputs.size() == 0 || find == inputs.end()){
                                 addrs[address_id].balance += value_out;
                                 
+                                //第一次出现
                                 if(addrs[address_id].first_clock == -10){
                                     addrs[address_id].first_clock = blocktime;
                                 }
@@ -236,16 +279,21 @@ int main(int argc, char *argv[])
                 }
             }
         
-            infile.close();
+            infile.close();             //关闭文件输入流
         }
 
         cout<<"文件读取结束"<<endl;
         
         cout<<"Save addr_info1 addrs[] ............."<<endl;
         
-        fstream memoryfile("address_info2.dat", ios::out | ios::binary);
+        //直接保存内存数据（二进制）
+        string address_info2fname = outpath + "/address_info2.dat";
+        fstream memoryfile(address_info2fname.data(), ios::out | ios::binary);
         for(int n = 0; n < addressnum; n++){
-            if(n % 1000000 == 0) cout<<"addressNo:"<<n<<endl;
+            if (n / 100000000 > 0 && n % 100000000 == 0)
+			{
+				cout<<"addressNo:"<<n<<endl;
+			}
             memoryfile.write((char*)&addrs[n], sizeof(addrs[n]));
         }
         memoryfile.close();
@@ -254,7 +302,7 @@ int main(int argc, char *argv[])
         
         cout<<"tx:"<<txnum<<endl;
 
-        time_t end_time;
+        time_t end_time;  //结束时间
         end_time = time(NULL);
         cout<<"time:"<<end_time - start_time<<endl;
     

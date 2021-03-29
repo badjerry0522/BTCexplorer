@@ -29,12 +29,13 @@ struct Address
 
 int main(int argc, char *argv[]) 
 {
-    if(argc > 5){
+    if(argc > 6){
         string path = argv[1];        //原始交易json文件目录
-        string file_num = argv[2];    //原始交易json文件的个数
+        string file_num = argv[2];    //追加原始交易json文件的个数
         string outpath = argv[3];     //将地址转换为id编号后的交易json文件目录
         string starttxfile = argv[4]; //追加开始的文件编号
         string csvpath = argv[5];     //id-地址csv文件
+        string scan1_out = argv[6];   //运行输出目录
         int filenum = atoi(file_num.c_str());
         int starttxfileno = atoi(starttxfile.c_str());
 
@@ -67,7 +68,7 @@ int main(int argc, char *argv[])
                 getline(readstr, address_str, ','); //第二列address
 
                 int id_addr = atoi(idstr.c_str());
-                cout<<id_addr<<endl;
+                // cout<<id_addr<<endl;
                 addressmap.insert(map<string, int>::value_type (address_str, id_addr));
                 addressid = addressid > id_addr ? addressid : id_addr;
             }
@@ -80,7 +81,8 @@ int main(int argc, char *argv[])
         csvFile.open(csvpath.c_str(), ios::out|ios::app); // 追加内容
 
         ofstream newcsvFile;
-        newcsvFile.open("addressidnew.csv", ios::out);
+        string scan1_outfname = scan1_out + "/addressidnew.csv";
+        newcsvFile.open(scan1_outfname.data(), ios::out);
 
         // if(addressmap.empty()){
         //     addressmap.insert(map<string, int>::value_type ("coinbase", 0));
@@ -108,7 +110,8 @@ int main(int argc, char *argv[])
                 cout<<"error:"<< files <<endl;
                 //return 0;
             }
-                
+            
+            cout<<"do:"<<files<<endl;
             string jsonstring;
             while(getline(infile, jsonstring))
             {
@@ -133,10 +136,11 @@ int main(int argc, char *argv[])
                     //地址类型:: 0：coinbase(创币交易)；1：NonStandardAddress；2：OpReturn；>=3：正常地址
 
                     txnum += 1;
-                    cout<<"tx:"<<txnum<<endl;
+                    // cout<<"tx:"<<txnum<<endl;
 
                     // newroot["fee"] = Json::Value(stoll(root["fee"].asString()));
-                    newroot["fee"] = Json::Value(root["fee"].asDouble());
+                    double fee = root["fee"].asDouble();
+                    newroot["fee"] = Json::Value(Json::Value::Int64(fee));
                 
                     //交易输入
                     Json::Value inputs;
@@ -189,7 +193,8 @@ int main(int argc, char *argv[])
 
                         //输入金额
                         // oneinput["value"] = Json::Value(stoll(root["inputs"][i]["value"].asString()));
-                        oneinput["value"] = Json::Value(root["inputs"][i]["value"].asDouble());
+                        double value = root["inputs"][i]["value"].asDouble();
+                        oneinput["value"] = Json::Value(Json::Value::Int64(value));
                         oneinput["address"] = Json::Value(addresslist);
 
                         //一个交易输入
@@ -246,7 +251,8 @@ int main(int argc, char *argv[])
 
                         //输出金额
                         // oneoutput["value"] = Json::Value(stoll(root["outputs"][i]["value"].asString()));
-                        oneoutput["value"] = Json::Value(root["outputs"][i]["value"].asDouble());
+                        double value = root["outputs"][i]["value"].asDouble();
+                        oneoutput["value"] = Json::Value(Json::Value::Int64(value));
                         oneoutput["address"] = Json::Value(addresslist);
 
                         //一个交易输出
@@ -266,15 +272,14 @@ int main(int argc, char *argv[])
 
             infile.close();             //关闭文件输入流
             outFile.close();
-            cout<<files<<endl;
         }
 
         cout<<"文件读取结束"<<endl;
         cout<<"Save addrs[] ............."<<endl;
         cout<<"txnum:"<<txnum<<endl;
         cout<<"addressmap:"<<addressmap.size()<<endl;
-            
-            
+
+        
         // //地址-id csv文件
         // ofstream csvFile;
         // csvFile.open("addressid.csv", ios::out); 
@@ -290,12 +295,21 @@ int main(int argc, char *argv[])
 
         csvFile.close();
         newcsvFile.close();
-
-        addressmap.clear();
         
+        int64_t addressmap_size = addressmap.size();
+        addressmap.clear();
+
         time_t end_time;//结束时间
         end_time = time(NULL);
         cout<<"time:"<<end_time - start_time<<endl;
+
+        ofstream oFile;
+        string metafname = scan1_out + "/scan1_addr_meta.txt";
+        oFile.open(metafname.data(), ios::out);
+        oFile<<(end_time - start_time)<<" "<<txnum<<" "<<addressmap_size<<endl;
+        oFile.close();
+        
+        
 
     }
     else{

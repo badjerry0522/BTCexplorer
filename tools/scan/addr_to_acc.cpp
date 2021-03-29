@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 {
 
 	//命令行参数
-	string input_account,json,output_path,file_num,add_num;
+	string input_account,json,output_path,file_num,acc_meta;
 	int filenum,addnum;
 	if(argc > 5)
     {
@@ -91,13 +91,12 @@ int main(int argc, char *argv[])
 	json = argv[2];
 	output_path = argv[3];
 	file_num = argv[4];
-	add_num = argv[5];
+	acc_meta = argv[5];
 	filenum = atoi(file_num.c_str());
-	addnum = atoi(add_num.c_str());
     } 
     else
     {
-        cout<<"error,the parameters are less than 4 "<<endl;
+        cout<<"error,the parameters are less than 5 "<<endl;
         return 0;
     }	
 
@@ -105,6 +104,15 @@ int main(int argc, char *argv[])
 	//读入json文件tx_0.txt
 	ifstream f;
 	string line;
+	f.open(acc_meta);
+	while (getline(f, line))
+	{
+		int time, acc_num;
+		stringstream input(line);
+		input >> time >> acc_num >> addnum;
+	}
+	f.close();
+
            
 	f.open(input_account);
 	int* account = new int[addnum];

@@ -12,35 +12,40 @@
 #include <sstream>
 #include <time.h>
 #include <jsoncpp/json/json.h>
+
 using namespace std;
-
-
-
-
 
 int main(int argc, char *argv[])
 {
     
-     string input_path,output_path,file_num,record_num;
+     string input_path,output_path,file_num,record_num,account_meta;
 	int filenum,recordnum;
 	//命令行参数
-	if(argc > 2)
+	if(argc > 3)
 	{
         input_path = argv[1];
 	    output_path = argv[2];
+		account_meta = argv[3];
 	}
 	else
 	{
-        cout<<"error,the parameters are less than 2 "<<endl;
-	return 0;
+        cout<<"error,the parameters are less than 3 "<<endl;
+	    return 0;
 	}
 
 
 	//读入json文件tx_0.txt
 	ifstream f;
 	string line;
-	
-	
+	int addr_num = 0;
+	int time = 0;
+	f.open(account_meta);
+	while (getline(f, line))
+	{
+		stringstream input(line);
+		input >> time >> addr_num;
+	}
+	f.close();
 
 	//用户编号，从0开始
 
@@ -48,9 +53,9 @@ int main(int argc, char *argv[])
 	
 	int t_user_size = 0;
 	int l = 0;
-	int r = 300000000;
+	int r = 400000000;
 
-	for (int i = 0; i < 3; i++)
+	while(l < addr_num )
 	{
 		int lin = 0;
 		map<int, set<int>> accMap;
@@ -82,29 +87,25 @@ int main(int argc, char *argv[])
 			int len = i.second.size();
 			printf("写入第%d个账户-----", t_user_size);
 			printf("\r\033[k");
-			if (i.first == -1)
+
+			for (auto j : i.second)
 			{
-				for (auto j : i.second)
-				{
-					out_file << j << " " << t_user_size << " " << 1 << endl;
-					t_user_size++;
-				}
-			}
-			else
-			{
-				for (auto j : i.second)
-				{
 					out_file << j << " " << t_user_size << " " << len << endl;
-				}
 			}
+			
 			t_user_size++;
 		}
 		l = r;
-		r = r + 300000000;
+		r = r + 400000000;
 
 		out_file.close();
 		f.close();
 	}
+	ofstream meta;
+	meta.open(account_meta);
+	meta << time << " " << t_user_size << " " << addr_num << endl;
+	meta.close();
+
 	cout << "the number of account: " << t_user_size << endl;
 	
 	cout << "input file: " << input_path<< endl;
@@ -112,6 +113,5 @@ int main(int argc, char *argv[])
 		
 	cout << "The run time is:" << (double)clock() /CLOCKS_PER_SEC<< "s" << endl;
 
-	
 	return 0;
 }

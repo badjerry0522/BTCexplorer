@@ -114,13 +114,25 @@ struct addr_info2{
  
 int main(int argc, char *argv[]) 
 {
-    if(argc > 3){
+    if(argc > 4){
         string path = argv[1];        //交易json文件目录
         string file_num = argv[2];    //交易json文件数量
-        string address_num = argv[3]; //地址数量
+        string meta = argv[3]; //meta文件
+        string outpath = argv[4];     //输出文件目录
         int filenum = atoi(file_num.c_str());
-        int addressnum = atoi(address_num.c_str());
-        
+		int addressnum;
+		ifstream f;
+		string line;
+		f.open(meta);
+		while (getline(f, line))
+		{
+			int time, acc_num;
+			stringstream input(line);
+			input >> time >> acc_num >> addressnum;
+		}
+		f.close();
+
+
         addr_info1* addrs = new addr_info1[addressnum];
         cout<<"addr_info1"<<endl;
 
@@ -138,7 +150,8 @@ int main(int argc, char *argv[])
         addr_info0 addrtemp = addr_info0(); //第二次扫描的数据结构
         
         //读取第二次扫描的二进制数据
-        fstream iofile("memory_scan2.dat", ios::in | ios::binary);
+        string memory2_accountfname = outpath + "/memory2_account.dat";
+        fstream iofile(memory2_accountfname.data(), ios::in | ios::binary);
         for (int i = 0; i < addressnum; i++){
             iofile.seekg(i * sizeof(addrtemp), ios::beg);
             iofile.read((char*)&addrtemp, sizeof(addrtemp));
@@ -161,7 +174,8 @@ int main(int argc, char *argv[])
         int nowreadtime = 0;
 
 		ofstream err;
-		err.open("error.txt", ios::out);
+		string erf = outpath + "/error3.txt";
+		err.open(erf.data(), ios::out);
 
 
 
@@ -172,10 +186,10 @@ int main(int argc, char *argv[])
             
             //若失败,则输出错误消息,并终止程序运行 
             if( !infile.is_open()){
-                 cout<< files <<endl;
+                 cout<<"error:"<< files <<endl;
                  //return 0;
             }
-			cout << files << endl;
+			cout<< "do:" << files << endl;
             string jsonstring;
             while(getline(infile, jsonstring))
             {
@@ -188,7 +202,7 @@ int main(int argc, char *argv[])
 				reader.parse(jsonstring, root);
                     int blocktime = ((root["blocktime"].asInt()) - GenesisofBitcoin);
                      
-                    //地址类型::   -1：非创币交易；-2：NonStandardAddress；-3：OpReturn；>=0：正常地址
+                    //地址类型:: 0：coinbase(创币交易)；1：NonStandardAddress；2：OpReturn；>=3：正常地址
 					if (blocktime >= nowreadtime) {
 						nowreadtime = blocktime;
 					}
@@ -413,15 +427,18 @@ int main(int argc, char *argv[])
 
        //csv文件
        ofstream csvFile;
-       csvFile.open("data3_account.csv", ios::out); 
+       string data3_accountfname = outpath + "/data3_account.csv";
+       csvFile.open(data3_accountfname.data(), ios::out); 
 
        //直接保存内存数据（二进制）
-       fstream memoryfile("memory3_account.dat", ios::out | ios::binary);
+       string memory3_accountfname = outpath + "/memory3_account.dat";
+       fstream memoryfile(memory3_accountfname.data(), ios::out | ios::binary);
 
         for(int n = 0; n < addressnum; n++){
 			if (n / 100000000 > 0 && n % 100000000 == 0)
-					cout << "accountNo:" << n << endl;
-            
+            {
+                cout << "accountNo:" << n << endl;
+            }
             
             // 写文件
             csvFile <<n<<',';

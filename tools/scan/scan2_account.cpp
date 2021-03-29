@@ -54,13 +54,27 @@ struct addr_info1
  
 int main(int argc, char *argv[]) 
 {
-    if(argc > 3){
+    if(argc > 4){
         string path = argv[1];        //交易json文件目录
         string file_num = argv[2];    //交易json文件数量
-        string address_num = argv[3]; //地址数量
+        string meta = argv[3]; //meta文件
+		string outpath = argv[4];     //输出文件目录
         int filenum = atoi(file_num.c_str());
-        int addressnum = atoi(address_num.c_str());
-        
+        int addressnum;
+		ifstream f;
+		string line;
+		f.open(meta);
+		while (getline(f, line))
+		{
+			int time, acc_num;
+			stringstream input(line);
+			input >> time >> acc_num >> addressnum;
+		}
+		f.close();
+
+
+
+
         //交易地址参数数组
         addr_info1* addrs = new addr_info1[addressnum];
         int txnum = 0;
@@ -76,19 +90,20 @@ int main(int argc, char *argv[])
 		//test
 		int last = 0;
 		ofstream o2;
-		o2.open("error.txt");
+		string erf = outpath + "/error2.txt";
+		o2.open(erf.data());
 
 		for (unsigned int n = 0; n < filenum; n++) {
 			ifstream infile;
 			string files = path + "/acc" + to_string(n) + ".txt";
 			infile.open(files.data());   //将文件流对象与文件连接起来 
-			cout << files << endl;
+			
 			//若失败,则输出错误消息,并终止程序运行 
 			if (!infile.is_open()) {
-				cout << files << endl;
+				cout<<"error:"<< files << endl;
 				//return 0;
 			}
-
+			cout<< "do:" << files << endl;
 			string jsonstring;
 			while (getline(infile, jsonstring))
 			{
@@ -119,7 +134,7 @@ int main(int argc, char *argv[])
 					//cout<<blocktime<<endl;
 					//cout<<fee<<endl;
 
-					//地址类型::   -1：非创币交易；-2：NonStandardAddress；-3：OpReturn；>=0：正常地址
+					//地址类型:: 0：coinbase(创币交易)；1：NonStandardAddress；2：OpReturn；>=3：正常地址
 					if (blocktime >= nowreadtime) {
 						nowreadtime = blocktime;
 						txnum += 1;
@@ -244,12 +259,17 @@ int main(int argc, char *argv[])
         
         //csv文件
         ofstream csvFile;
-        csvFile.open("data2_account.csv", ios::out); 
+		string data2_accountfname = outpath + "/data2_account.csv";
+        csvFile.open(data2_accountfname.data(), ios::out); 
         
         //直接保存内存数据（二进制）
-        fstream memoryfile("memory2_account.dat", ios::out | ios::binary);
+		string memory2_accountfname = outpath + "/memory2_account.dat";
+        fstream memoryfile(memory2_accountfname.data(), ios::out | ios::binary);
         for(int n = 0; n < addressnum; n++){
-            cout<<"accountNo:"<<n<<endl;
+			if (n / 100000000 > 0 && n % 100000000 == 0){
+				cout<<"accountNo:"<<n<<endl;
+			}
+			
             // 写文件============================================
             csvFile<<n<<',';
             csvFile<<addrs[n].firsttime << ',';

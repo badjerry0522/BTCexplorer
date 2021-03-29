@@ -114,17 +114,26 @@ struct addr_info2{
  
 int main(int argc, char *argv[]) 
 {
-    if(argc > 6){
+    if(argc > 4){
         string path = argv[1];        //交易json文件目录
         string file_num = argv[2];    //交易json文件数量
-        string address_num = argv[3]; //地址数量
-        string scan2dat = argv[4];    //第二次扫描的二进制数据
-        string scan3dat = argv[5];    //第三次扫描的二进制数据
-        string starttxfile = argv[6]; //追加开始的文件编号
+        string meta = argv[3]; //meta文件
+        string outpath = argv[4];     //输出文件目录
         int filenum = atoi(file_num.c_str());
-        int addressnum = atoi(address_num.c_str());
-        int starttxfileno = atoi(starttxfile.c_str());
+		int addressnum;
         
+		ifstream f;
+		string line;
+		f.open(meta);
+		while (getline(f, line))
+		{
+			int time, acc_num;
+			stringstream input(line);
+			input >> time >> acc_num >> addressnum;
+		}
+		f.close();
+
+
         addr_info1* addrs = new addr_info1[addressnum];
         cout<<"addr_info1"<<endl;
 
@@ -142,10 +151,11 @@ int main(int argc, char *argv[])
         addr_info0 addrtemp = addr_info0(); //第二次扫描的数据结构
         
         //读取第二次扫描的二进制数据
-        fstream iofile2(scan2dat.c_str(), ios::in | ios::binary);
+        string memory2_addressfname = outpath + "/memory2_address.dat";
+        fstream iofile(memory2_addressfname.data(), ios::in | ios::binary);
         for (int i = 0; i < addressnum; i++){
-            iofile2.seekg(i * sizeof(addrtemp), ios::beg);
-            iofile2.read((char*)&addrtemp, sizeof(addrtemp));
+            iofile.seekg(i * sizeof(addrtemp), ios::beg);
+            iofile.read((char*)&addrtemp, sizeof(addrtemp));
             //cout<<"i:"<<i<<endl;
             addrs[i].lasttime = -10;     //重置最晚出现时间
             addrs[i].V = 0;            //重置当前账户金额
@@ -160,56 +170,27 @@ int main(int argc, char *argv[])
             addrs[i].VinVout = addrtemp.Vin + addrtemp.Vout;         //交易金额总数
             addrs[i].suminout = addrtemp.sumin + addrtemp.sumout;    //交易的账户地址总数
         }
-        iofile2.close();
-
-
-        //读取第二次扫描的二进制数据
-        fstream iofile3(scan3dat.c_str(), ios::in | ios::binary);
-
-        iofile3.seekg(0, ios::end);
-		int64_t data_length = iofile3.tellg();
-		int64_t size = data_length / sizeof(addr_info2);
-		// cout<<size<<endl;
-		for (size_t i = 0; i < size; i++)
-		{
-			iofile3.seekg(i * sizeof(addr_info2), ios::beg);
-            // iofile3.read((char*)&addrs2[i+3], sizeof(addr_info2));
-			iofile3.read((char*)&addrs2[i], sizeof(addr_info2));
-			cout<<"index:"<<i<<endl;
-		}
-		iofile3.close();
-
-		// int index = 0;
-		// if (iofile3.is_open())
-		// {
-		// 	while (!iofile3.eof()){
-		// 		iofile3.seekg(index * sizeof(addr_info2), ios::beg);
-		// 		iofile3.read((char*)&addrs2[index+3], sizeof(addr_info2));
-		// 		index++;
-		// 		cout<<"index:"<<index<<endl;
-		// 	}
-		// }
-		// iofile3.close();
-
+        iofile.close();
 
         int nowreadtime = 0;
 
 		ofstream err;
-		err.open("error.txt", ios::out);
+        string erf = outpath + "/error3.txt";
+		err.open(erf.data(), ios::out);
 
 
 
-        for(unsigned int n = starttxfileno; n < starttxfileno+filenum; n++){
+        for(unsigned int n = 0; n < filenum; n++){
             ifstream infile;
             string files = path + "/tx_" + to_string(n) +".txt";
             infile.open(files.data());   //将文件流对象与文件连接起来 
             
             //若失败,则输出错误消息,并终止程序运行 
             if( !infile.is_open()){
-                 cout<< files <<endl;
+                 cout<<"error:"<< files <<endl;
                  //return 0;
             }
-			cout << files << endl;
+			cout<< "do:" << files << endl;
             string jsonstring;
             while(getline(infile, jsonstring))
             {
@@ -222,7 +203,7 @@ int main(int argc, char *argv[])
 				reader.parse(jsonstring, root);
                     int blocktime = ((root["blocktime"].asInt()) - GenesisofBitcoin);
                      
-                    //地址类型::   0：非创币交易；1：NonStandardAddress；2：OpReturn；>=3：正常地址
+                    //地址类型:: 0：coinbase(创币交易)；1：NonStandardAddress；2：OpReturn；>=3：正常地址
 					if (blocktime >= nowreadtime) {
 						nowreadtime = blocktime;
 					}
@@ -239,10 +220,7 @@ int main(int argc, char *argv[])
                                 if(address_id >= 3){
                                     if(j == 0){
                                         //交易金额
-										// string v = root["inputs"][i]["value"].asString();
-										// unsigned long long value = stoll(v);
-                                        
-                                        double v = root["inputs"][i]["value"].asDouble();
+										double v = root["inputs"][i]["value"].asDouble();
 										unsigned long long value = uint64_t(v);
 
 
@@ -275,9 +253,8 @@ int main(int argc, char *argv[])
                                 if(address_id >= 3){
                                     if(j == 0){
                                         //交易金额
-										// string v = root["outputs"][i]["value"].asString();
-										// unsigned long long value = stoll(v);
-                                        double v = root["outputs"][i]["value"].asDouble();
+                                        
+										double v = root["outputs"][i]["value"].asDouble();
 										unsigned long long value = uint64_t(v);
 
 
@@ -320,6 +297,8 @@ int main(int argc, char *argv[])
                                 
                                 //统计时间
 								if (addrs[address_id].lasttime < blocktime) {
+
+
 
 									if (addrs[address_id].V < addrs[address_id].Vmax * 0.1 || addrs[address_id].Vmax <= 0) {
 										addrs2[address_id].T10 += (blocktime - addrs[address_id].lasttime);
@@ -413,6 +392,10 @@ int main(int argc, char *argv[])
 									;
                             }
                         }
+                    
+ 
+           
+
 
               }
             
@@ -442,14 +425,18 @@ int main(int argc, char *argv[])
 
        //csv文件
        ofstream csvFile;
-       csvFile.open("data3_address.csv", ios::out); 
+       string data3_addressfname = outpath + "/data3_address.csv";
+       csvFile.open(data3_addressfname.data(), ios::out); 
 
        //直接保存内存数据（二进制）
-       fstream memoryfile("memory3_address.dat", ios::out | ios::binary);
+       string memory3_addressfname = outpath + "/memory3_address.dat";
+       fstream memoryfile(memory3_addressfname.data(), ios::out | ios::binary);
 
         for(int n = 0; n < addressnum; n++){
-			if (n / 100000000 > 0 && n % 100000000 == 0)
-					cout << "addressNo:" << n << endl;
+			if (n / 10000000 > 0 && n % 10000000 == 0)
+			{
+                cout << "addressNo:" << n << endl;
+            }
             
             
             // 写文件

@@ -15,27 +15,36 @@
 
 using namespace std;
 
-//äº¤æ˜“åœ°å€æ–¹é¢çš„å‚æ•°
+//½»Ò×µØÖ··½ÃæµÄ²ÎÊı
 
 
 
 
 int main(int argc, char *argv[])
 {
-	string addrtxt, result, addr_num;
+	string addrtxt, result, meta;
 	int addrnum;
 	if (argc > 3) {
-			 addrtxt = argv[1];  // è´¦æˆ·åœ°å€çš„èšç±»æ–‡ä»¶
-			 result = argv[2];   // è¾“å‡ºç»“æœæ–‡ä»¶
-			 addr_num = argv[3];  // è´¦æˆ·æ•°
-			 addrnum = atoi(addr_num.c_str());
+			 addrtxt = argv[1];  // ÕË»§µØÖ·µÄ¾ÛÀàÎÄ¼ş
+			 result = argv[2];   // Êä³ö½á¹ûÎÄ¼ş
+			 meta= argv[3];  // meta
+			 
 	}
 	else{
-			cout << "error,the parameters are less than 2 " << endl;
+			cout << "error,the parameters are less than 3 " << endl;
 			return 0;
 	}
+	ifstream f;
+	string line;
+	f.open(meta);
+	while (getline(f, line))
+	{
+		int time, acc_num;
+		stringstream input(line);
+		input >> time >> acc_num >> addrnum;
+	}
+	f.close();
 
-	//æ ‡ç­¾åœ°å€æ–‡ä»¶
 
 
 	int* addr = new int[addrnum];
@@ -48,12 +57,12 @@ int main(int argc, char *argv[])
 	fstream memoryfile(result, ios::out | ios::binary);
 	
 
-	//è¯»å–åœ°å€id
+	//¶ÁÈ¡µØÖ·id
 	int k = 0;
 	string s;
 	while (getline(infile, s))
 	{
-		printf("è¿™æ˜¯ç¬¬%dæ¬¡è¯»å–è´¦æˆ·-----", k);
+		printf("ÕâÊÇµÚ%d´Î¶ÁÈ¡ÕË»§-----", k);
 		printf("\r\033[k");
 	
 		istringstream input(s);
@@ -75,7 +84,7 @@ int main(int argc, char *argv[])
 	memoryfile.close();
 
 
-	//æµ‹è¯•
+	//²âÊÔ
 
 	  int re;
 	  fstream iofile1(result, ios::in | ios::binary);

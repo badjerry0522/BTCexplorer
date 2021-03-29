@@ -86,21 +86,22 @@ int is_new(int* root,address* addrlist,int address_num)
 int main(int argc, char *argv[])
 {
     
-     string input_path,output_path,file_num,add_num;
+    string input_path,output_path,file_num,add_num,metapath;
 	int filenum,addnum;
 	//命令行参数
-	if(argc > 4)
+	if(argc > 5)
 	{
         input_path = argv[1];
 	    output_path = argv[2];
 	    file_num = argv[3];
 		add_num = argv[4];
+		metapath = argv[5];
         filenum = atoi(file_num.c_str());
 		addnum = atoi(add_num.c_str());
 	}
 	else
 	{
-        cout<<"error,the parameters are less than 4 "<<endl;
+        cout<<"error,the parameters are less than 5 "<<endl;
 	return 0;
 	}
 
@@ -129,6 +130,7 @@ int main(int argc, char *argv[])
 	int abn = 0;
 	//发现了多少地址
 	int add = 0;
+	int time = 0;
 	int invalid_input = 0;
 
      for(int i=0;i<filenum;i++)
@@ -160,7 +162,7 @@ int main(int argc, char *argv[])
 		Json::Value root_json;
 		reader.parse(line, root_json);
 
-
+		time = root_json["blocktime"].asInt();
 		//输入输出地址集
 		
 	
@@ -326,9 +328,19 @@ int main(int argc, char *argv[])
 		 else
 			 out_file << i << " " << i<< endl ;
 	 }
-	 cout<< endl << "the number of address: " << add << endl;
+	 //  ofstream account_meta;
+	//  string metafname = metapath+"/account_meta.txt";
+	//  account_meta.open(metafname.data());
+	//  account_meta<<time<<" "<< add << endl;
+	//  account_meta.close();
+	//  cout << endl << "the number of address: " << add << endl;
 
-
+	ofstream account_meta;
+	 string metafname = metapath+"/account_meta.txt";
+	 account_meta.open(metafname.data());
+	 account_meta<<time<<" "<< addnum << endl;
+	 account_meta.close();
+	 cout << endl << "the number of address: " << add << "  all:" << addnum << endl;
 
 	//int t_user_size = 0;
 
@@ -349,7 +361,7 @@ int main(int argc, char *argv[])
 
 
 	out_file.close();
-        
+	delete[] root;
 
 	
 	cout << "input file: " << input_path<<"0-"<<filenum-1<<".txt"<< endl;
@@ -365,3 +377,6 @@ int main(int argc, char *argv[])
 	
 	return 0;
 }
+
+
+// https://github.com/badjerry0522/BTCexplorer.git

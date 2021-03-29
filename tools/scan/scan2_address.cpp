@@ -54,15 +54,23 @@ struct addr_info1
  
 int main(int argc, char *argv[]) 
 {
-    if(argc > 5){
+    if(argc > 4){
         string path = argv[1];        //交易json文件目录
-        string file_num = argv[2];    //交易json文件个数
-        string address_num = argv[3]; //地址数量
-        string scan2dat = argv[4];    //读取第二次扫描的二进制数据
-        string starttxfile = argv[5]; //追加开始的文件编号
+        string file_num = argv[2];    //交易json文件数量
+        string meta = argv[3];        //meta文件
+		string outpath = argv[4];     //输出文件目录
         int filenum = atoi(file_num.c_str());
-        int addressnum = atoi(address_num.c_str());
-        int starttxfileno = atoi(starttxfile.c_str());
+		int addressnum;
+		ifstream f;
+		string line;
+		f.open(meta);
+		while (getline(f, line))
+		{
+			int time, acc_num;
+			stringstream input(line);
+			input >> time >> acc_num >> addressnum;
+		}
+		f.close();
         
         //交易地址参数数组
         addr_info1* addrs = new addr_info1[addressnum];
@@ -79,36 +87,21 @@ int main(int argc, char *argv[])
 		//test
 		int last = 0;
 		ofstream o2;
-		o2.open("error.txt");
+		string erf = outpath + "/error2.txt";
+		o2.open(erf.data());
 
-
-		//读取第二次扫描的二进制数据
-        fstream iofile(scan2dat.c_str(), ios::in | ios::binary);
-
-		iofile.seekg(0, ios::end);
-		int64_t data_length = iofile.tellg();
-		int64_t size = data_length / sizeof(addr_info1);
-		// cout<<size<<endl;
-		for (size_t i = 0; i < size; i++)
-		{
-			iofile.seekg(i * sizeof(addr_info1), ios::beg);
-			// iofile.read((char*)&addrs[i+3], sizeof(addr_info1));
-			iofile.read((char*)&addrs[i], sizeof(addr_info1));
-			cout<<"index:"<<i<<endl;
-		}
-		iofile.close();
-		
-		for (unsigned int n = starttxfileno; n < starttxfileno+filenum; n++) {
+		for (unsigned int n = 0; n < filenum; n++) {
 			ifstream infile;
 			string files = path + "/tx_" + to_string(n) + ".txt";
-			infile.open(files.data());   
-			cout << files << endl;
-			//若失败,则输出错误消息
+			infile.open(files.data());   //将文件流对象与文件连接起来 
+			
+			//若失败,则输出错误消息,并终止程序运行 
 			if (!infile.is_open()) {
-				cout << files << endl;
+				cout<<"error:"<< files <<endl;
 				//return 0;
 			}
 
+			cout<< "do:" << files << endl;
 			string jsonstring;
 			while (getline(infile, jsonstring))
 			{
@@ -139,11 +132,11 @@ int main(int argc, char *argv[])
 					//cout<<blocktime<<endl;
 					//cout<<fee<<endl;
 
-					//地址类型::   0：非创币交易；1：NonStandardAddress；2：OpReturn；>=3：正常地址
+					//地址类型:: 0：coinbase(创币交易)；1：NonStandardAddress；2：OpReturn；>=3：正常地址
 					if (blocktime >= nowreadtime) {
 						nowreadtime = blocktime;
 						txnum += 1;
-						//cout << "tx:" << txnum << endl;
+						// cout << "tx:" << txnum << endl;
 					}
 						//交易输入
 						vector<int> inputs;
@@ -167,10 +160,10 @@ int main(int argc, char *argv[])
 
 										inputs.push_back(address_id);
 
-										//多重签名地址MultisigAddress
-										if (address_num > 1) {
-											addrs[address_id].Multisig = true;
-										}
+										// //多重签名地址MultisigAddress
+										// if (address_num > 1) {
+										// 	addrs[address_id].Multisig = true;
+										// }
 								}
 							}
 						}
@@ -197,10 +190,10 @@ int main(int argc, char *argv[])
 										outputs.push_back(address_id);
 
 
-										//多重签名地址MultisigAddress
-										if (address_num > 1) {
-											addrs[address_id].Multisig = true;
-										}
+										// //多重签名地址MultisigAddress
+										// if (address_num > 1) {
+										// 	addrs[address_id].Multisig = true;
+										// }
 								}
 							}
 						}
@@ -259,13 +252,17 @@ int main(int argc, char *argv[])
         
         //csv文件
         ofstream csvFile;
-        csvFile.open("data2_address.csv", ios::out); 
+		string data2_addressfname = outpath + "/data2_address.csv";
+        csvFile.open(data2_addressfname.data(), ios::out); 
         
         //直接保存内存数据（二进制）
-        fstream memoryfile("memory2_address.dat", ios::out | ios::binary);
+		string memory2_addressfname = outpath + "/memory2_address.dat";
+        fstream memoryfile(memory2_addressfname.data(), ios::out | ios::binary);
         for(int n = 0; n < addressnum; n++){
-            // cout<<"addressNo:"<<n<<endl;
-			if (n / 100000000 > 0 && n % 100000000 == 0) cout << "addressNo:" << n << endl;
+            if (n / 100000000 > 0 && n % 100000000 == 0)
+			{
+				cout<<"addressNo:"<<n<<endl;
+			}
 			
             // 写文件============================================
             csvFile<<n<<',';
