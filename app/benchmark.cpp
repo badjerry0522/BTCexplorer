@@ -17,7 +17,9 @@ int test_log2(uint64_t d) {
 
 	return i - 1;
 }
-void test_benchmark(trans_in_mem *tim)
+
+//TOAD  max_output_value
+void TOAD_MAXVAL(trans_in_mem *tim)
 {
 	ERROR_CODE err;
 	int maxseq = tim->max_tran_seq();
@@ -28,11 +30,11 @@ void test_benchmark(trans_in_mem *tim)
 	//max output value
 	for (int i = 0; i <= maxseq; i++)
 	{
-		int n = tim->get_output_num(i, &err);
+		int n = tim->get_output_num(i, &err); //get output num
 		if (err == NO_ERROR)
 		{
-			struct transaction_binary *tp = (struct transaction_binary *)malloc(sizeof(struct transaction_binary));
-			tim->get_tran_binary(i, tp);
+			struct transaction_binary *tp = (struct transaction_binary *)malloc(sizeof(struct transaction_binary));  
+			tim->get_tran_binary(i, tp);  //get trans output value
 			for (int j = 0; j < n; j++)
 			{
 				LONG_BTC_VOL val = tp->outputs[j].bitcoin;
@@ -51,7 +53,7 @@ void test_benchmark(trans_in_mem *tim)
 	//TOAD
 	gettimeofday(&start, NULL);
 	uint32_t log_size = test_log2(max_output_value);
-	uint64_t* num = new uint64_t[log_size + 1];
+	uint64_t* num = new uint64_t[log_size + 1];  //distribution of log_2(output value)
 	for (int i = 0; i < log_size + 1; i++) num[i] = 0;
 	for (int i = 0; i <= maxseq; i++)
 	{
@@ -60,9 +62,8 @@ void test_benchmark(trans_in_mem *tim)
 		{
 			struct transaction_binary *tp = (struct transaction_binary *)malloc(sizeof(struct transaction_binary));
 			tim->get_tran_binary(i, tp);
-			for (int j = 0; j < n; j++) num[test_log2(tp->outputs[j].bitcoin)]++;
+			for (int j = 0; j < n; j++) num[test_log2(tp->outputs[j].bitcoin)]++;  
 			free(tp);
-
 		}
 	}
 
@@ -88,19 +89,23 @@ void test_benchmark(trans_in_mem *tim)
 
 	f.close();
 }
-void test_addr(address_query* addrq)
+
+//Satoshi Dice address 
+void Satoshi_addr(address_query* addrq)
 {
 	ERROR_CODE err;
 	int seq = 0;
-	int num = 0;
+	int num = 0; //num of satoshi dice address
 	float time_use = 0;
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 	do
 	{
 		char btc_addr[256];
-		err = addrq->get_btc_address(seq, btc_addr);
+		err = addrq->get_btc_address(seq, btc_addr);  //get btc addr char
 		seq++;
+
+		//1dice prefix
 		if (btc_addr[0] == '1'&&btc_addr[1] == 'd'&&btc_addr[2] == 'i'&&btc_addr[3] == 'c'&&btc_addr[4] == 'e')  num++;
 
 	} while (err != INVALID_ADDR_SEQ);
@@ -114,18 +119,12 @@ void test_addr(address_query* addrq)
 	f.close();
 }
 ERROR_CODE benchmark_app(int app_argn, void **argv) {
-	//test_tran_vec();
-	//test_CLOCK();
-	//test_statistics();
+
 	BE_env *env = (BE_env *)argv[0];
 	address_query *addrq = env->addrq;
 	trans_in_mem *tim = env->tim;
-	//addr2tran *a2t = env->a2t;
-	//cout<<seq<<endl;
-	//test_TIM(seq,addrq,tim);
-	//test_addr2tran(btc_addr,addrq,tim,a2t);
-	test_benchmark(tim);
-	//test_addr(addrq);
+	TOAD_MAXVAL(tim);
+	Satoshi_addr(addrq);
 	return NO_ERROR;
 }
 
