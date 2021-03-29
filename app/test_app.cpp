@@ -110,6 +110,10 @@ void test_addr2tran(char *btc_addr,address_query *addrq,trans_in_mem *tim,addr2t
     free(tp);
     delete tran;
 }
+
+
+
+
 ERROR_CODE test_app(int app_argn,void **argv){
     //test_tran_vec();
     //test_CLOCK();
@@ -120,8 +124,9 @@ ERROR_CODE test_app(int app_argn,void **argv){
     trans_in_mem *tim=env->tim;
     addr2tran *a2t=env->a2t;
     //cout<<seq<<endl;
-    //test_TIM(seq,addrq,tim);
-    test_addr2tran(btc_addr,addrq,tim,a2t);
+    test_TIM(1,addrq,tim);
+    //test_addr2tran(btc_addr,addrq,tim,a2t);
+
     return NO_ERROR;
 }
 
