@@ -1,10 +1,14 @@
 #include <iostream>
 #include <ostream>
 #include <stdio.h>
+#include <sys/time.h>
+#include <stdlib.h>
 #include "../include/core_type.h"
 #include "../include/trans_file.h"
 #include "../include/app_manager.h"
 #include "../include/be.h"
+#include "../include/tran_vec.h"
+#include "../include/statistics.h"
 #include "../include/trans_in_mem.h"
 
 int test_log2(uint64_t d) {
@@ -17,9 +21,7 @@ int test_log2(uint64_t d) {
 
 	return i - 1;
 }
-
-//TOAD  max_output_value
-void TOAD_MAXVAL(trans_in_mem *tim)
+void test_benchmark(trans_in_mem *tim)
 {
 	ERROR_CODE err;
 	int maxseq = tim->max_tran_seq();
@@ -30,11 +32,11 @@ void TOAD_MAXVAL(trans_in_mem *tim)
 	//max output value
 	for (int i = 0; i <= maxseq; i++)
 	{
-		int n = tim->get_output_num(i, &err); //get output num
+		int n = tim->get_output_num(i, &err);
 		if (err == NO_ERROR)
 		{
-			struct transaction_binary *tp = (struct transaction_binary *)malloc(sizeof(struct transaction_binary));  
-			tim->get_tran_binary(i, tp);  //get trans output value
+			struct transaction_binary *tp = (struct transaction_binary *)malloc(sizeof(struct transaction_binary));
+			tim->get_tran_binary(i, tp);
 			for (int j = 0; j < n; j++)
 			{
 				LONG_BTC_VOL val = tp->outputs[j].bitcoin;
@@ -53,7 +55,7 @@ void TOAD_MAXVAL(trans_in_mem *tim)
 	//TOAD
 	gettimeofday(&start, NULL);
 	uint32_t log_size = test_log2(max_output_value);
-	uint64_t* num = new uint64_t[log_size + 1];  //distribution of log_2(output value)
+	uint64_t* num = new uint64_t[log_size + 1];
 	for (int i = 0; i < log_size + 1; i++) num[i] = 0;
 	for (int i = 0; i <= maxseq; i++)
 	{
@@ -62,8 +64,9 @@ void TOAD_MAXVAL(trans_in_mem *tim)
 		{
 			struct transaction_binary *tp = (struct transaction_binary *)malloc(sizeof(struct transaction_binary));
 			tim->get_tran_binary(i, tp);
-			for (int j = 0; j < n; j++) num[test_log2(tp->outputs[j].bitcoin)]++;  
+			for (int j = 0; j < n; j++) num[test_log2(tp->outputs[j].bitcoin)]++;
 			free(tp);
+
 		}
 	}
 
@@ -89,29 +92,58 @@ void TOAD_MAXVAL(trans_in_mem *tim)
 
 	f.close();
 }
-
-//Satoshi Dice address 
-void Satoshi_addr(address_query* addrq)
+void test_addr(address_query* addrq)
 {
 	ERROR_CODE err;
-	int seq = 0;
-	int num = 0; //num of satoshi dice address
+	int num = 0;
 	float time_use = 0;
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
-	do
+	int lines = 0;
+	int filenum = 0;
+	char srcfname[MAX_FNAME_SIZE];
+	while (1)
 	{
-		char btc_addr[256];
-		err = addrq->get_btc_address(seq, btc_addr);  //get btc addr char
-		seq++;
+		filenum++;
+		strcpy(srcfname, "./data/address/seq2BTC/seq_btc_");
+		char temp[20];
+		sprintf(temp, "%d.csv", filenum);
+		strcat(srcfname, temp);
+		ifstream fin(srcfname, ios::in);
+		if (!fin.is_open()) {
+			break;
+		}
+		char line[256];
+		
+		while (!fin.eof()) {
+			char addr_seq[20];
+			char BTCaddr[200];
 
-		//1dice prefix
-		if (btc_addr[0] == '1'&&btc_addr[1] == 'd'&&btc_addr[2] == 'i'&&btc_addr[3] == 'c'&&btc_addr[4] == 'e')  num++;
+			//Read addr_seq and BTCaddr
+			char *token;
+			fin.getline(line, 255);
+			if (strlen(line) == 0) continue;
+			token = strtok(line, ",");
+			strcpy(addr_seq, token);
+			token = strtok(NULL, " ");
+			strcpy(BTCaddr, token);
+			int btclen = strlen(BTCaddr);
+			int seqlen = strlen(addr_seq);
 
-	} while (err != INVALID_ADDR_SEQ);
+			if ((btclen > 0) && (seqlen > 0)) {
+				if (BTCaddr[0] == '1'&&BTCaddr[1] == 'd'&&BTCaddr[2] == 'i'&&BTCaddr[3] == 'c'&&BTCaddr[4] == 'e') num++;
+			}
+			else {
+				cout << lines << "Empty Line" << endl;
+			}
+			//if (lines % 100000000 == 0) cout << lines << " " << addr_seq << " " << BTCaddr << endl;
+
+			lines++;
+		}
+		fin.close();
+	}
 	gettimeofday(&end, NULL);
 	time_use = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
-
 	ofstream f;
 	f.open("benchmark.txt", ios::app);
 	f << "number of Satoshi Dice address=" << num << endl;
@@ -119,12 +151,18 @@ void Satoshi_addr(address_query* addrq)
 	f.close();
 }
 ERROR_CODE benchmark_app(int app_argn, void **argv) {
-
+	//test_tran_vec();
+	//test_CLOCK();
+	//test_statistics();
 	BE_env *env = (BE_env *)argv[0];
 	address_query *addrq = env->addrq;
 	trans_in_mem *tim = env->tim;
-	TOAD_MAXVAL(tim);
-	Satoshi_addr(addrq);
+	//addr2tran *a2t = env->a2t;
+	//cout<<seq<<endl;
+	//test_TIM(seq,addrq,tim);
+	//test_addr2tran(btc_addr,addrq,tim,a2t);
+	test_benchmark(tim);
+	test_addr(addrq);
 	return NO_ERROR;
 }
 
