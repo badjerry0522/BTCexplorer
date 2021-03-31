@@ -171,8 +171,8 @@ ERROR_CODE generate_av(char *dir_name,char *output_dir_name){
     gettimeofday(&start,NULL);
     build_TIM(dir_name,0,output_dir_name,&er);
     gettimeofday(&end,NULL);
-    time_use=(end.tv_sec-start.tv_sec)*1000000+(end.tv_usec-start.tv_usec);
-    cout<<"time_use="<<time_use*1000<<"s"<<endl;
+    time_use=(end.tv_sec-start.tv_sec)+(end.tv_usec-start.tv_usec) / 1000000;
+    cout<<"time_use="<<time_use<<"s"<<endl;
 	return er;
 }
 

@@ -46,11 +46,11 @@ void test_benchmark(trans_in_mem *tim)
 		}
 	}
 	gettimeofday(&end, NULL);
-	time_use = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+	time_use = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000;
 	ofstream f;
 	f.open("benchmark.txt");
 	f << "max output value=" << max_output_value << endl;
-	f << "time use=" << time_use * 1000 << "s" << endl << endl;
+	f << "time use=" << time_use  << "s" << endl << endl;
 
 	//TOAD
 	gettimeofday(&start, NULL);
@@ -87,8 +87,8 @@ void test_benchmark(trans_in_mem *tim)
 
 	}
 	gettimeofday(&end, NULL);
-	time_use = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
-	f << "time_use=" << time_use * 1000 << "s" << endl << endl;
+	time_use = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000;
+	f << "time_use=" << time_use  << "s" << endl << endl;
 
 	f.close();
 }
@@ -143,11 +143,11 @@ void test_addr(address_query* addrq)
 		fin.close();
 	}
 	gettimeofday(&end, NULL);
-	time_use = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+	time_use = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000;
 	ofstream f;
 	f.open("benchmark.txt", ios::app);
 	f << "number of Satoshi Dice address=" << num << endl;
-	f << "time_use=" << time_use * 1000 << "s" << endl;
+	f << "time_use=" << time_use  << "s" << endl;
 	f.close();
 }
 ERROR_CODE benchmark_app(int app_argn, void **argv) {
