@@ -69,6 +69,8 @@ int main(int argc, char *argv[])
 			int time, acc_num;
 			stringstream input(line);
 			input >> time >> acc_num >> addressnum;
+
+			addressnum = acc_num; //应为账户数
 		}
 		f.close();
 
