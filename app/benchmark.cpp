@@ -30,46 +30,50 @@ void test_benchmark(trans_in_mem *tim)
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 	//max output value
-	for (int i = 0; i <= maxseq; i++)
+	struct transaction_binary *tp = (struct transaction_binary *)malloc(sizeof(struct transaction_binary));
+	for (int i = 0; i < maxseq; i++)
 	{
 		int n = tim->get_output_num(i, &err);
 		if (err == NO_ERROR)
 		{
-			struct transaction_binary *tp = (struct transaction_binary *)malloc(sizeof(struct transaction_binary));
+			
 			tim->get_tran_binary(i, tp);
 			for (int j = 0; j < n; j++)
 			{
 				LONG_BTC_VOL val = tp->outputs[j].bitcoin;
 				if (val > max_output_value) max_output_value = val;
 			}
-			free(tp);
+			
 		}
+		
 	}
+	free(tp);
 	gettimeofday(&end, NULL);
-	time_use = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000;
+	time_use = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec) ;
 	ofstream f;
 	f.open("benchmark.txt");
 	f << "max output value=" << max_output_value << endl;
-	f << "time use=" << time_use  << "s" << endl << endl;
+	f << "time use=" << time_use / 1000000 << "s" << endl << endl;
 
 	//TOAD
 	gettimeofday(&start, NULL);
 	uint32_t log_size = test_log2(max_output_value);
 	uint64_t* num = new uint64_t[log_size + 1];
 	for (int i = 0; i < log_size + 1; i++) num[i] = 0;
+	tp = (struct transaction_binary *)malloc(sizeof(struct transaction_binary));
 	for (int i = 0; i <= maxseq; i++)
 	{
 		int n = tim->get_output_num(i, &err);
 		if (err == NO_ERROR)
 		{
-			struct transaction_binary *tp = (struct transaction_binary *)malloc(sizeof(struct transaction_binary));
+			
 			tim->get_tran_binary(i, tp);
 			for (int j = 0; j < n; j++) num[test_log2(tp->outputs[j].bitcoin)]++;
-			free(tp);
+			
 
 		}
 	}
-
+	free(tp);
 	for (int i = 0; i < log_size + 1; i++)
 	{
 		uint64_t l, r;
@@ -87,8 +91,8 @@ void test_benchmark(trans_in_mem *tim)
 
 	}
 	gettimeofday(&end, NULL);
-	time_use = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000;
-	f << "time_use=" << time_use  << "s" << endl << endl;
+	time_use = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+	f << "time_use=" << time_use / 1000000 << "s" << endl << endl;
 
 	f.close();
 }
@@ -139,15 +143,17 @@ void test_addr(address_query* addrq)
 			//if (lines % 100000000 == 0) cout << lines << " " << addr_seq << " " << BTCaddr << endl;
 
 			lines++;
+			if (lines > 9829162) break;
 		}
 		fin.close();
+		if (lines > 9829162) break;
 	}
 	gettimeofday(&end, NULL);
-	time_use = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000;
+	time_use = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec) ;
 	ofstream f;
 	f.open("benchmark.txt", ios::app);
 	f << "number of Satoshi Dice address=" << num << endl;
-	f << "time_use=" << time_use  << "s" << endl;
+	f << "time_use=" << time_use / 1000000 << "s" << endl;
 	f.close();
 }
 ERROR_CODE benchmark_app(int app_argn, void **argv) {
@@ -162,7 +168,7 @@ ERROR_CODE benchmark_app(int app_argn, void **argv) {
 	//test_TIM(seq,addrq,tim);
 	//test_addr2tran(btc_addr,addrq,tim,a2t);
 	test_benchmark(tim);
-	test_addr(addrq);
+	//test_addr(addrq);
 	return NO_ERROR;
 }
 
