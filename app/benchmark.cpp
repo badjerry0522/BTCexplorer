@@ -21,81 +21,7 @@ int test_log2(uint64_t d) {
 
 	return i - 1;
 }
-void test_benchmark(trans_in_mem *tim)
-{
-	ERROR_CODE err;
-	int maxseq = tim->max_tran_seq();
-	LONG_BTC_VOL max_output_value = 0;
-	float time_use = 0;
-	struct timeval start, end;
-	gettimeofday(&start, NULL);
-	//max output value
-	struct transaction_binary *tp = (struct transaction_binary *)malloc(sizeof(struct transaction_binary));
-	for (int i = 0; i < maxseq; i++)
-	{
-		int n = tim->get_output_num(i, &err);
-		if (err == NO_ERROR)
-		{
-			
-			tim->get_tran_binary(i, tp);
-			for (int j = 0; j < n; j++)
-			{
-				LONG_BTC_VOL val = tp->outputs[j].bitcoin;
-				if (val > max_output_value) max_output_value = val;
-			}
-			
-		}
-		
-	}
-	free(tp);
-	gettimeofday(&end, NULL);
-	time_use = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec) ;
-	ofstream f;
-	f.open("benchmark.txt");
-	f << "max output value=" << max_output_value << endl;
-	f << "time use=" << time_use / 1000000 << "s" << endl << endl;
 
-	//TOAD
-	gettimeofday(&start, NULL);
-	uint32_t log_size = test_log2(max_output_value);
-	uint64_t* num = new uint64_t[log_size + 1];
-	for (int i = 0; i < log_size + 1; i++) num[i] = 0;
-	tp = (struct transaction_binary *)malloc(sizeof(struct transaction_binary));
-	for (int i = 0; i <= maxseq; i++)
-	{
-		int n = tim->get_output_num(i, &err);
-		if (err == NO_ERROR)
-		{
-			
-			tim->get_tran_binary(i, tp);
-			for (int j = 0; j < n; j++) num[test_log2(tp->outputs[j].bitcoin)]++;
-			
-
-		}
-	}
-	free(tp);
-	for (int i = 0; i < log_size + 1; i++)
-	{
-		uint64_t l, r;
-		if (i == 0)
-		{
-			f << "0<=value<2: " << num[i] << endl;
-		}
-		else
-		{
-			l = (unsigned long)1 << i;
-			r = (unsigned long)1 << (i + 1);
-			f << l << "<=value<" << r;
-			f << ": " << num[i] << endl;
-		}
-
-	}
-	gettimeofday(&end, NULL);
-	time_use = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
-	f << "time_use=" << time_use / 1000000 << "s" << endl << endl;
-
-	f.close();
-}
 void test_addr(address_query* addrq)
 {
 	ERROR_CODE err;
@@ -156,6 +82,118 @@ void test_addr(address_query* addrq)
 	f << "time_use=" << time_use / 1000000 << "s" << endl;
 	f.close();
 }
+
+void test_benchmark(trans_in_mem* tim)
+{
+	ERROR_CODE err;
+
+	LONG_BTC_VOL* out = new LONG_BTC_VOL[65536];
+	LONG_BTC_VOL* in = new LONG_BTC_VOL[65536];
+	
+	//max output value
+	int maxseq = 200000000;
+	LONG_BTC_VOL max_output_value = 0;
+	LONG_BTC_VOL max_fee = 0;
+	int negative = 0;
+	float time_use = 0;
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+	//max output value
+	for (int i = 0; i < maxseq; i++)
+	{
+		int output_num = tim->get_output_vol(i, out, &err);
+		if (err == NO_ERROR)
+		{
+			for (int j = 0; j < output_num; j++)
+			{
+				if (out[j] > max_output_value) max_output_value = out[j];
+			}
+
+		}
+
+	}
+	gettimeofday(&end, NULL);
+	time_use = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+	ofstream f;
+	f.open("benchmark.txt");
+	f << "max output value=" << max_output_value << endl;
+	f << "time use=" << time_use / 1000000 << "s" << endl << endl;
+
+	//TOAD
+	gettimeofday(&start, NULL);
+	uint32_t log_size = test_log2(max_output_value);
+	uint64_t* num = new uint64_t[log_size + 1];
+	for (int i = 0; i < log_size + 1; i++) num[i] = 0;
+	for (int i = 0; i <= maxseq; i++)
+	{
+		if (err == NO_ERROR)
+		{
+			int output_num = tim->get_output_vol(i, out, &err);
+			for (int j = 0; j < output_num; j++) num[test_log2(out[j])]++;
+		}
+	}
+	for (int i = 0; i < log_size + 1; i++)
+	{
+		uint64_t l, r;
+		if (i == 0)
+		{
+			f << "0<=value<2: " << num[i] << endl;
+		}
+		else
+		{
+			l = (unsigned long)1 << i;
+			r = (unsigned long)1 << (i + 1);
+			f << l << "<=value<" << r;
+			f << ": " << num[i] << endl;
+		}
+
+	}
+	gettimeofday(&end, NULL);
+	time_use = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+	f << "time_use=" << time_use / 1000000 << "s" << endl << endl;
+
+	//fee
+	gettimeofday(&start, NULL);
+	//max output value
+	for (int i = 0; i < maxseq; i++)
+	{
+		LONG_BTC_VOL in_vol=0;
+		LONG_BTC_VOL out_vol=0;
+		int input_num = tim->get_input_vol(i, in, &err);
+		if (err == NO_ERROR)
+		{
+			for (int j = 0; j < input_num; j++)
+			{
+				in_vol += in[j];
+			}
+
+		}
+		int output_num = tim->get_output_vol(i, out, &err);
+		if (err == NO_ERROR)
+		{
+			for (int j = 0; j < output_num; j++)
+			{
+				out_vol+=out[j];
+			}
+
+		}
+		LONG_BTC_VOL fee = in_vol - out_vol;
+		if (fee < 0) negative++;
+		if (fee > max_fee) max_fee = fee;
+	}
+	gettimeofday(&end, NULL);
+	time_use = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+	f << "max fee=" << max_fee << endl;
+	f << "time use=" << time_use / 1000000 << "s" << endl << endl;
+
+	cout << negative << endl;
+	f.close();
+	delete[] in;
+	delete[] out;
+}
+
+
+
 ERROR_CODE benchmark_app(int app_argn, void **argv) {
 	//test_tran_vec();
 	//test_CLOCK();

@@ -163,6 +163,71 @@ int trans_in_mem::get_all_addr(TRAN_SEQ seq,ADDR_SEQ *addr,ERROR_CODE *err){
 	*err=NO_ERROR;
 	return sum;
 }
+int trans_in_mem::get_input_vol(TRAN_SEQ seq, LONG_BTC_VOL* v, ERROR_CODE *err){
+	if (seq >= num_trans) *err=INVALID_TRAN_SEQ;
+	struct tran_info t;
+	*err = trans_cache->load(seq, (unsigned char *)&t);
+
+
+	BTC_VOL vol_short;
+	uint64_t index = t.index + t.input_num + t.output_num;
+
+	if (t.long_btc_vol == 0) {
+		for (int i = 0; i < t.input_num; i++) {
+			*err = av_cache->load(index, (unsigned char *)&vol_short);
+			v[i] = (LONG_BTC_VOL)vol_short;
+			index++;
+		}
+	}
+	else {
+		for (int i = 0; i < t.input_num; i++) {
+			BTC_VOL vol_low, vol_high;
+			*err = av_cache->load(index, (unsigned char *)&vol_low);
+			index++;
+			*err = av_cache->load(index, (unsigned char *)&vol_high);
+			index++;
+			v[i] = (LONG_BTC_VOL)vol_high;
+			v[i] = (v[i] << 32) + (LONG_BTC_VOL)vol_low;		
+
+		}
+	}
+	*err = NO_ERROR;
+	return t.input_num;
+
+}
+int trans_in_mem::get_output_vol(TRAN_SEQ seq, LONG_BTC_VOL* v, ERROR_CODE *err) {
+	if (seq >= num_trans) *err = INVALID_TRAN_SEQ;
+	struct tran_info t;
+	*err = trans_cache->load(seq, (unsigned char *)&t);
+
+	BTC_VOL vol_short;
+	uint64_t index = t.index + t.input_num + t.output_num;
+	if (t.long_btc_vol == 0) {
+		index += t.input_num;
+		for (int i = 0; i < t.output_num; i++) {
+			*err = av_cache->load(index, (unsigned char *)&vol_short);
+			v[i] = (LONG_BTC_VOL)vol_short;
+			
+			index++;
+		}
+	}
+	else {
+		index = index + t.input_num * 2;
+		for (int i = 0; i < t.output_num; i++) {
+			BTC_VOL vol_low, vol_high;
+			*err = av_cache->load(index, (unsigned char *)&vol_low);
+			index++;
+			*err = av_cache->load(index, (unsigned char *)&vol_high);
+			index++;
+			v[i] = (LONG_BTC_VOL)vol_high;
+			v[i] = (v[i] << 32) + (LONG_BTC_VOL)vol_low;
+		}
+	}
+	*err = NO_ERROR;
+	return t.output_num;
+}
+
+
 ERROR_CODE trans_in_mem::get_tran_binary(TRAN_SEQ seq,struct transaction_binary *ti){
 	if(seq>=num_trans) return INVALID_TRAN_SEQ;
 	struct tran_info t;
@@ -234,6 +299,7 @@ ERROR_CODE trans_in_mem::get_tran_binary(TRAN_SEQ seq,struct transaction_binary 
 	}
 	return NO_ERROR;
 }
+
 void trans_in_mem::profile(){
 	uint64_t access_num;
 	double hit_ratio;
