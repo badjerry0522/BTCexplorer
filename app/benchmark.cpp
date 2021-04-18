@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <nmmintrin.h>
 #include "../include/core_type.h"
 #include "../include/trans_file.h"
 #include "../include/app_manager.h"
@@ -89,16 +90,17 @@ void test_benchmark(trans_in_mem* tim)
 
 	LONG_BTC_VOL* out = new LONG_BTC_VOL[65536];
 	LONG_BTC_VOL* in = new LONG_BTC_VOL[65536];
-	
+
 	//max output value
 	int maxseq = 200000000;
 	LONG_BTC_VOL max_output_value = 0;
 	LONG_BTC_VOL max_fee = 0;
-	int negative = 0;
 	float time_use = 0;
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 	//max output value
+	__m128i a, b, res;
+	int64_t *flag = (int64_t *)malloc(128);
 	for (int i = 0; i < maxseq; i++)
 	{
 		int output_num = tim->get_output_vol(i, out, &err);
@@ -106,7 +108,12 @@ void test_benchmark(trans_in_mem* tim)
 		{
 			for (int j = 0; j < output_num; j++)
 			{
-				if (out[j] > max_output_value) max_output_value = out[j];
+				a = _mm_set1_epi64x(out[j]);
+				b = _mm_set1_epi64x(max_output_value);
+				res = _mm_cmpgt_epi64(a, b);
+
+				memcpy((void *)flag, (void *)&res, 128);
+				if (flag[0] == -1) max_output_value = out[j];
 			}
 
 		}
@@ -155,43 +162,59 @@ void test_benchmark(trans_in_mem* tim)
 	//fee
 	gettimeofday(&start, NULL);
 	//max output value
+
+
+	int64_t *fee = (int64_t *)malloc(128);
+	__m128i in_tot, out_tot;
 	for (int i = 0; i < maxseq; i++)
 	{
-		LONG_BTC_VOL in_vol=0;
-		LONG_BTC_VOL out_vol=0;
+		LONG_BTC_VOL temp = 0;
+		
+		in_tot = _mm_set1_epi64x(temp);
+		out_tot = _mm_set1_epi64x(temp);
 		int input_num = tim->get_input_vol(i, in, &err);
 		if (err == NO_ERROR)
 		{
 			for (int j = 0; j < input_num; j++)
 			{
-				in_vol += in[j];
+				a = _mm_set1_epi64x(in[j]);
+				in_tot = _mm_add_epi64(in_tot, a);
 			}
 
 		}
 		int output_num = tim->get_output_vol(i, out, &err);
 		if (err == NO_ERROR)
 		{
-			for (int j = 0; j < output_num; j++)
+			for (int j = 0; j < output_num; j++) 
 			{
-				out_vol+=out[j];
+				a = _mm_set1_epi64x(out[j]);
+				out_tot = _mm_add_epi64(out_tot, a);
 			}
 
 		}
-		LONG_BTC_VOL fee = in_vol - out_vol;
-		if (fee < 0) negative++;
-		if (fee > max_fee) max_fee = fee;
+		in_tot = _mm_sub_epi64(in_tot,out_tot);
+		
+		b = _mm_set1_epi64x(max_fee);
+		res = _mm_cmpgt_epi64(in_tot, b);
+		memcpy((void *)flag, (void *)&res, 128);
+		if (flag[0] == -1)
+		{
+			memcpy((void *)fee, (void *)&in_tot, 128);
+			max_fee = fee[0];
+		}
+
 	}
 	gettimeofday(&end, NULL);
 	time_use = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
 	f << "max fee=" << max_fee << endl;
 	f << "time use=" << time_use / 1000000 << "s" << endl << endl;
 
-	cout << negative << endl;
 	f.close();
 	delete[] in;
 	delete[] out;
+	free(flag);
+	free(fee);
 }
-
 
 
 ERROR_CODE benchmark_app(int app_argn, void **argv) {
