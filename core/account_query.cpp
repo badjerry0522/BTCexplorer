@@ -79,7 +79,7 @@ account* account_query::get_account_obj(ACCOUNT_SEQ seq,ERROR_CODE *err){
 	file.read((char*)&begin, sizeof(int));
     //?
     //if seq==max_addr_seq
-	//file.seekg((seq+1) * sizeof(int), ios::beg);
+	file.seekg((seq+1) * sizeof(int), ios::beg);
 	file.read((char*)&end, sizeof(int));
 	file.close();
 	//cout<<begin<<" "<<end<<endl;
@@ -87,10 +87,11 @@ account* account_query::get_account_obj(ACCOUNT_SEQ seq,ERROR_CODE *err){
 	account *cur_account=new account();
     cur_account->set_account_seq(seq);
 	ifstream file2(addr_list_fname, ios::binary);
-    file2.seekg(begin*sizeof(ADDR_SEQ), ios::beg);
+   
 	for (int i = begin; i < end; i++)
 	{
 		ADDR_SEQ addr_id ;
+		file2.seekg(i * sizeof(int), ios::beg);
 		file2.read((char*)&addr_id, sizeof(ADDR_SEQ));
 //		cout<<"Read from file:"<<addr_id<<endl;
 		cur_account->push_back(addr_id);

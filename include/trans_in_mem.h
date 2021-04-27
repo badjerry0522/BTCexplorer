@@ -83,8 +83,8 @@ class trans_in_mem{
 		LONG_BTC_VOL get_output_bitcion(TRAN_SEQ seq, ERROR_CODE *err);
 		
 		//return the value number and the value list in vol
-		int get_input_vol(TRAN_SEQ seq, LONG_BTC_VOL* vol, ERROR_CODE *err);
-		int get_output_vol(TRAN_SEQ seq, LONG_BTC_VOL* vol, ERROR_CODE *err);
+		int get_input_vol(TRAN_SEQ seq, BTC_VOL* vol, ERROR_CODE *err, int& long_btc_vol);
+		int get_output_vol(TRAN_SEQ seq, BTC_VOL* vol, ERROR_CODE *err, int& long_btc_vol);
 
 		//Max seq of addr,tran and block
 		ADDR_SEQ max_addr_seq();
