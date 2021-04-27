@@ -262,7 +262,7 @@ void test_benchmark2(trans_in_mem* tim, int maxseq)
 				for (index; index < output_num; index++)
 				{
 					long long v = out[index];
-					if (max_output_value < v) max_output_value = v;
+					max_output_value = v > max_output_value ? v : max_output_value;
 				}
 			}
 			else {
