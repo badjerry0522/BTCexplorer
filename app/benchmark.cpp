@@ -438,4 +438,4 @@ ERROR_CODE benchmark_app(int app_argn, void **argv) {
 	return NO_ERROR;
 }
 
-struct app_record benchmark = { "benchmark","option size",benchmark_app };
+struct app_record benchmark_record = { "benchmark","option size",benchmark_app };
